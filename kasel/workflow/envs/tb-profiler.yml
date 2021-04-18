@@ -1,0 +1,9 @@
+name: TB-profiler
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - tb-profiler
+prefix: /homedirs8/awitney/miniconda3/envs/TB-profiler
+

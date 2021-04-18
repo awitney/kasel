@@ -1,0 +1,12 @@
+name: alignment
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bwa
+  - bcftools
+  - samtools
+  - snpeff
+prefix: /homedirs8/awitney/miniconda3/envs/alignment
+

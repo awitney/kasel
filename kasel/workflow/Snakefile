@@ -1,0 +1,71 @@
+
+# Python dependecies pre-load
+import  os
+import  sys
+import  re
+import  pandas as pd
+from    os.path import join as join
+from    snakemake.utils import validate, min_version
+
+configfile: 'config.yml'
+
+print("LOCAL CONFIG", config)
+
+GENOMES    = 'genomes'
+DATA       = 'data'
+
+OUTPUT     = config['output']
+
+ALIGNMENTS = join(OUTPUT, 'alignments')
+VCF        = join(OUTPUT, 'vcf')
+RESULTS    = join(OUTPUT, 'results')
+CALLERS    = join(OUTPUT, 'callers')
+
+REF = 'NC_000962'
+
+DATASET = config['dataset']
+meta_file = config['meta_file']
+
+sampledata = pd.read_table(meta_file).set_index("sample", drop=False)
+SAMPLES = sampledata['sample'].tolist()
+READS1 = sampledata['forward'].tolist()
+	
+# define format of ref
+wildcard_constraints:
+	ref="NC_\d+"
+
+
+# function to load read files within rules
+def get_seq(wildcards, reads):
+	return sampledata.loc[(wildcards.sample), [reads]].dropna()[0]
+
+rule all:
+	input:
+#		join(RESULTS, DATASET, 'stats.coverage.' + REF + '.txt'),
+		join(RESULTS, DATASET, 'stats.txt'),
+		#
+		expand(join(ALIGNMENTS, DATASET, '{ref}_{sample}.bam'), ref=REF, sample=SAMPLES),
+		expand(join(VCF, DATASET, '{ref}_{sample}.all.vcf.gz'), ref=REF, sample=SAMPLES),
+		expand(join(VCF, DATASET, 'variants', '{ref}_{sample}.vcf.gz'), ref=REF, sample=SAMPLES),
+		expand(join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'), ref=REF, sample=SAMPLES),
+		expand(join(VCF, DATASET, 'variants/annotated', '{ref}_{sample}.tsv'), ref=REF, sample=SAMPLES),
+		expand(join(RESULTS, DATASET, 'variants', '{ref}_' + DATASET + '.tsv'), ref=REF),
+		#
+		expand(join(CALLERS, DATASET, 'TB-profiler', 'results', '{sample}.results.txt'), sample=SAMPLES),
+		join(CALLERS, DATASET, 'TB-profiler', 'tbprofiler.txt'),
+		#
+#		join(CALLERS, DATASET, 'MTBSeq', 'Classification', 'Strain_Classification.tab'),
+
+
+
+rule testing:
+	input:
+		'testing2'
+	output:
+		'testing'
+	run:
+		shell("touch testing")
+
+include: join('rules', "bwa.smk")
+include: join('rules', "tb-profiler.smk")
+include: join('rules', "mtbseq.smk")

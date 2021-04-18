@@ -1,0 +1,6 @@
+*.swo
+*.swp
+*.swn
+.snakemake
+__pycache__
+kasel.egg-info

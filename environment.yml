@@ -1,0 +1,12 @@
+name: kasel
+channels:
+    - conda-forge
+    - bioconda
+    - defaults
+dependencies:
+    - pip
+    - python
+    - snakemake-minimal
+    - loguru
+    - pip:
+        - pandas
