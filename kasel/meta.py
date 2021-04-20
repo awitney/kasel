@@ -7,7 +7,7 @@ import snakemake
 import yaml
 from collections import defaultdict
 
-import custom_logger as custom_logger
+#import custom_logger as custom_logger
 
 from loguru import logger
 
