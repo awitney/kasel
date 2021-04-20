@@ -19,7 +19,7 @@ setup(
     install_requires=install_requires,
     requires=['python (>=3.5)'],
     packages=['kasel'],
-    scripts=['kasel/scripts/custom_logger.py'],
+#    scripts=['kasel/scripts/custom_logger.py'],
     author="Adam Witney",
     description='A toolset for working with TB sequence data',
     long_description=long_description,
