@@ -7,7 +7,7 @@ import  pandas as pd
 from    os.path import join as join
 from    snakemake.utils import validate, min_version
 
-configfile: 'config.yml'
+configfile: 'kasel-config.yml'
 
 print("LOCAL CONFIG", config)
 

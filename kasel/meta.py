@@ -17,6 +17,7 @@ def run(parser, args):
 	DATASET = args.dataset
 	run = args.run
 	cores = args.cores
+	cluster = args.cluster
 
 	logger.info("Pipeline started using: " + meta_file)
 
@@ -27,8 +28,11 @@ def run(parser, args):
 		"dataset": DATASET,
 		"meta_file": meta_file,
 		"output": 'pipeline',
-		"cluster": 'qsub -V -l h_rt=48:00:00 -l mem={resources.memory} -pe smp {threads}'
+		"cluster": False
 	}
+	
+	if cluster == True:
+		params['cluster'] = "qsub -V -l h_rt=48:00:00 -l mem={resources.memory} -pe smp {threads}"
 
 	snakefile = os.path.join(thisdir, 'workflow','Snakefile')
 	
