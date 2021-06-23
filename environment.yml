@@ -8,5 +8,6 @@ dependencies:
     - python
     - snakemake-minimal
     - loguru
+    - graphviz
     - pip:
         - pandas

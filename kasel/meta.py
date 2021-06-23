@@ -16,6 +16,7 @@ def run(parser, args):
 	meta_file = args.meta_file
 	DATASET = args.dataset
 	run = args.run
+	dag = args.dag
 	cores = args.cores
 	cluster = args.cluster
 
@@ -41,7 +42,8 @@ def run(parser, args):
 		sys.exit(-1)
 
 	status = snakemake.snakemake(snakefile, printshellcmds=False, quiet=False, forceall=False, force_incomplete=True,
-									workdir=tempdir, config=params, nodes=cores, lock=False, dryrun=run, use_conda=True, cluster=params['cluster'], conda_frontend="conda")
+									workdir=tempdir, config=params, nodes=cores, lock=False, dryrun=run, use_conda=True, 
+									cluster=params['cluster'], conda_frontend="conda", printdag=dag)
 
 	logger.info("Pipeline finished: " + str(status))
 

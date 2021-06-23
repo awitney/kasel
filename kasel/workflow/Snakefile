@@ -9,7 +9,7 @@ from    snakemake.utils import validate, min_version
 
 configfile: 'kasel-config.yml'
 
-print("LOCAL CONFIG", config)
+#print("LOCAL CONFIG", config)
 
 GENOMES    = 'genomes'
 DATA       = 'data'

@@ -59,6 +59,8 @@ def init_pipeline_parser():
 	parser_meta.add_argument(
 		'-r', '--run', action="store_false", required=False, dest='run', help='Run pipeline')
 	parser_meta.add_argument(
+		'--dag', action="store_true", required=False, dest='dag', help='Generate DAG diagram')
+	parser_meta.add_argument(
 		'-cl', '--cluster', action="store_true", required=False, dest='cluster', help='Run on cluster with qsub')
 	parser_meta.add_argument(
 		'-c', '--cores', required=False, type=int, dest='cores', default=1, help='Number of cores')
