@@ -23,6 +23,8 @@ CALLERS    = join(OUTPUT, 'callers')
 
 REF = 'NC_000962'
 
+DRUGS = ['PTM', 'BDQ']
+
 DATASET = config['dataset']
 meta_file = config['meta_file']
 
@@ -32,8 +34,8 @@ READS1 = sampledata['forward'].tolist()
 	
 # define format of ref
 wildcard_constraints:
-	ref="NC_\d+"
-
+	ref="NC_\d+",
+	drug="[a-zA-Z]{3}"
 
 # function to load read files within rules
 def get_seq(wildcards, reads):
@@ -48,15 +50,20 @@ rule all:
 		expand(join(VCF, DATASET, '{ref}_{sample}.all.vcf.gz'), ref=REF, sample=SAMPLES),
 		expand(join(VCF, DATASET, 'variants', '{ref}_{sample}.vcf.gz'), ref=REF, sample=SAMPLES),
 		expand(join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'), ref=REF, sample=SAMPLES),
-		expand(join(VCF, DATASET, 'variants/annotated', '{ref}_{sample}.tsv'), ref=REF, sample=SAMPLES),
+		expand(join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.tsv'), ref=REF, sample=SAMPLES),
 		expand(join(RESULTS, DATASET, 'variants', '{ref}_' + DATASET + '.tsv'), ref=REF),
 		#
+		# Drug specific SNPs
+		expand(join(VCF, DATASET, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'), ref=REF, sample=SAMPLES, drug=DRUGS),
+		expand(join(RESULTS, DATASET, 'variants', 'resistance', '{ref}_' + DATASET + '_{drug}.tsv'), ref=REF, drug=DRUGS),
+		expand(join(RESULTS, DATASET, 'variants', 'resistance', '{ref}_' + DATASET + '.tsv'), ref=REF),
+		#
+		# External callers
 		expand(join(CALLERS, DATASET, 'TB-profiler', 'results', '{sample}.results.txt'), sample=SAMPLES),
 		join(CALLERS, DATASET, 'TB-profiler', 'tbprofiler.txt'),
 		expand(join(CALLERS, DATASET, 'mykrobe', '{sample}.results.csv'), sample=SAMPLES),
 		#
 #		join(CALLERS, DATASET, 'MTBSeq', 'Classification', 'Strain_Classification.tab'),
-
 
 
 rule testing:

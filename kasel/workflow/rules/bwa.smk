@@ -133,7 +133,7 @@ rule snp_report_resistance_all:
 	output:
 		tsv = join(RESULTS, DATASET, 'variants/resistance', '{ref}_' + DATASET + '_{drug}.tsv'),
 	conda:
-		"snp_calling.yml"
+		"../envs/alignment.yml"
 	shell:
 		"""
 		echo "Sample\tPos\tGT\tREF\tALT\tType\tQUAL\tFilter\tDP\tDP4\tANN\t" > {output.tsv}
@@ -154,7 +154,7 @@ rule snp_report_resistance_all_summary:
 	output:
 		out = join(RESULTS, DATASET, 'variants/resistance', '{ref}_' + DATASET + '.tsv'),
 	conda:
-		"snp_calling.yml"
+		"../envs/alignment.yml"
 	shell:
 		"""
 		wc -l  $(find {params.finddir} -name "*_BDQ*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ)_(.+).tsv:$3\t$2\t$1:' | sort -k2 > {output.out}
@@ -168,14 +168,14 @@ rule snp_report_resistance:
 		memory = config['default']['memory']
 	params:
 		string = join(ALIGNMENTS, DATASET, '{ref}_'),
-		bed    = 'scripts/snps.Chromosome-{drug}.bed',
-		tmp    = join(VCF, DATASET, 'variants/annotated', '{ref}_{sample}.ann.vcf.gz.tmp'),
+		bed    = 'kasel/kasel/workflow/data/snps.Chromosome-{drug}.bed',
+		tmp    = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz.tmp'),
 	input:
-		vcf = join(VCF, DATASET, 'variants/annotated', '{ref}_{sample}.ann.vcf.gz'),
+		vcf = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
 	output:
-		tsv = join(VCF, DATASET, 'variants/annotated/resistance', '{ref}_{drug}_{sample}.tsv'),
+		tsv = join(VCF, DATASET, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'),
 	conda:
-		"snp_calling.yml"
+		"../envs/alignment.yml"
 	shell:
 		"""
 		bcftools filter -Oz -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} > {params.tmp}
