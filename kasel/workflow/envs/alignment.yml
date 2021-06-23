@@ -4,9 +4,9 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - bwa
-  - bcftools
-  - samtools
-  - snpeff
+  - bwa=0.7.17=hed695b0_7
+  - bcftools=1.10.2=hd2cd319_0
+  - samtools=1.10=h9402c20_2
+  - snpeff=4.3.1t=0
 prefix: /homedirs8/awitney/miniconda3/envs/alignment
 
