@@ -1,0 +1,9 @@
+name: mykrobe
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - mykrobe=0.9.0
+prefix: /homedirs8/awitney/miniconda3/envs/mykrobe
+
