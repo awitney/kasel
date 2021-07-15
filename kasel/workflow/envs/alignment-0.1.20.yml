@@ -5,8 +5,7 @@ channels:
   - defaults
 dependencies:
   - bwa=0.7.17
-  - bcftools=1.12
-  - samtools=1.12
+  - samtools=0.1.19
+  - tabix=0.2.6
   - snpeff=4.3.1t
 prefix: /homedirs8/awitney/miniconda3/envs/alignment
-

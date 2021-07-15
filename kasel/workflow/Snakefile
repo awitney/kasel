@@ -28,6 +28,10 @@ DRUGS = ['PTM', 'BDQ']
 DATASET = config['dataset']
 meta_file = config['meta_file']
 
+# set a directory prefix for old version samtools
+OLD = '0.1.19'
+DATASETOLD = DATASET + '-' + OLD
+
 sampledata = pd.read_table(meta_file).set_index("sample", drop=False)
 SAMPLES = sampledata['sample'].tolist()
 READS1 = sampledata['forward'].tolist()
@@ -35,10 +39,12 @@ READS1 = sampledata['forward'].tolist()
 # define format of ref
 wildcard_constraints:
 	ref="NC_\d+",
-	drug="[a-zA-Z]{3}"
+	drug="[a-zA-Z]{3}",
+	DATASET="^((?!\/)*$)"
 
 # function to load read files within rules
 def get_seq(wildcards, reads):
+	print(wildcards)
 	return sampledata.loc[(wildcards.sample), [reads]].dropna()[0]
 
 rule all:
@@ -64,7 +70,19 @@ rule all:
 		expand(join(CALLERS, DATASET, 'mykrobe', '{sample}.results.csv'), sample=SAMPLES),
 		#
 #		join(CALLERS, DATASET, 'MTBSeq', 'Classification', 'Strain_Classification.tab'),
-
+		#	
+		# for old version samtools/bcftools
+		expand(join(ALIGNMENTS, DATASET, OLD, '{ref}_{sample}.bam'), ref=REF, sample=SAMPLES),
+		expand(join(VCF, DATASET, OLD, '{ref}_{sample}.all.vcf.gz'), ref=REF, sample=SAMPLES),
+		expand(join(VCF, DATASET, OLD, 'variants', '{ref}_{sample}.vcf.gz'), ref=REF, sample=SAMPLES),
+		expand(join(VCF, DATASET, OLD, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'), ref=REF, sample=SAMPLES),
+		expand(join(VCF, DATASET, OLD, 'variants', 'annotated', '{ref}_{sample}.tsv'), ref=REF, sample=SAMPLES),
+		expand(join(RESULTS, DATASET, OLD, 'variants', '{ref}_' + DATASET + '.tsv'), ref=REF),
+		#
+		# Drug specific SNPs
+		expand(join(VCF, DATASET, OLD, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'), ref=REF, sample=SAMPLES, drug=DRUGS),
+		expand(join(RESULTS, DATASET, OLD, 'variants', 'resistance', '{ref}_' + DATASET + '_{drug}.tsv'), ref=REF, drug=DRUGS),
+		expand(join(RESULTS, DATASET, OLD, 'variants', 'resistance', '{ref}_' + DATASET + '.tsv'), ref=REF),
 
 rule testing:
 	input:
@@ -75,6 +93,7 @@ rule testing:
 		shell("touch testing")
 
 include: join('rules', "bwa.smk")
+include: join('rules', "bwa-0.1.20.smk")
 include: join('rules', "tb-profiler.smk")
 include: join('rules', "mtbseq.smk")
 include: join('rules', "mykrobe.smk")
