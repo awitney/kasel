@@ -15,10 +15,15 @@ rule alignment_pe_old:
 		r2 = lambda wildcards: get_seq(wildcards, 'reverse'),
 	output:
 		bam = join(ALIGNMENTS, DATASET, OLD, '{ref}_{sample}.bam')
+	log:
+		join(LOGS, DATASET, OLD, 'alignment_pe.{ref}.{sample}.log')
 	conda:
 		"../envs/alignment-0.1.20.yml"
 	shell:
-		"bwa mem -t {threads} {input.genome} {input.r1} {input.r2} | samtools view -bS - | samtools sort -o - {params.tempf} - | samtools rmdup - - > {output.bam} && samtools index {output.bam}"
+		"""
+		( bwa mem -t {threads} {input.genome} {input.r1} {input.r2} | samtools view -bS - | samtools sort -o - {params.tempf} - | samtools rmdup - - > {output.bam} ) 2> {log}
+		samtools index {output.bam}
+		"""
 
 rule site_calling_old:
 	threads:
@@ -31,11 +36,13 @@ rule site_calling_old:
 		bam = join(ALIGNMENTS, DATASET, OLD, '{ref}_{sample}.bam'),
 	output:
 		vcf = join(VCF, DATASET, OLD, '{ref}_{sample}.all.vcf.gz')
+	log:
+		join(LOGS, DATASET, OLD, 'site_calling.{ref}.{sample}.log')
 	conda:
 		"../envs/alignment-0.1.20.yml"
 	shell:
 		"""
-		samtools mpileup -gf {input.genome} {input.bam} | bcftools view -cg - | bgzip > {output.vcf} && tabix -p vcf {output.vcf}
+		( samtools mpileup -gf {input.genome} {input.bam} | bcftools view -cg - | bgzip > {output.vcf} && tabix -p vcf {output.vcf} ) 2>&1 > {log}
 		"""
 
 rule variant_calling_old:

@@ -15,12 +15,12 @@ rule tbprofiler_pe:
 	output:
 		join(CALLERS, DATASET, 'TB-profiler', 'results', '{sample}.results.txt')
 	log:
-		'logs/tbprofiler.{sample}.log'
+		join(LOGS, DATASET, 'tbprofiler.{sample}.log')
 	conda:
 		"../envs/tb-profiler.yml"
 	shell:
 		"""
-		tb-profiler profile --threads {threads} -1 {input.r1} -2 {input.r2}  -p {params.prefix} --txt --dir {params.outdir} > {log}
+		tb-profiler profile --threads {threads} -1 {input.r1} -2 {input.r2}  -p {params.prefix} --txt --dir {params.outdir} 2>&1 > {log}
 		"""
 
 rule tbprofiler_collate:

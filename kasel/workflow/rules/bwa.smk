@@ -15,10 +15,15 @@ rule alignment_pe:
 		r2 = lambda wildcards: get_seq(wildcards, 'reverse'),
 	output:
 		bam = join(ALIGNMENTS, DATASET, '{ref}_{sample}.bam')
+	log:
+		join(LOGS, DATASET, 'alignment_pe.{ref}.{sample}.log')
 	conda:
 		"../envs/alignment.yml"
 	shell:
-		"bwa mem -t {threads} {input.genome} {input.r1} {input.r2} | samtools view -bS - | samtools sort -T {params.tempf} - | samtools rmdup - - > {output.bam} && samtools index {output.bam}"
+		"""
+		( bwa mem -t {threads} {input.genome} {input.r1} {input.r2} | samtools view -bS - | samtools sort -T {params.tempf} - | samtools rmdup - - > {output.bam} ) 2> {log}
+		samtools index {output.bam}
+		"""
 
 rule site_calling:
 	threads:
@@ -31,16 +36,18 @@ rule site_calling:
 		bam = join(ALIGNMENTS, DATASET, '{ref}_{sample}.bam'),
 	output:
 		vcf = join(VCF, DATASET, '{ref}_{sample}.all.vcf.gz')
+	log:
+		join(LOGS, DATASET, 'site_calling.{ref}.{sample}.log')
 	conda:
 		"../envs/alignment.yml"
 	shell:
 		"""
-		bcftools mpileup -Ou -f {input.genome} {input.bam} --annotate 'FORMAT/DP,FORMAT/AD,FORMAT/ADF,FORMAT/ADR' | \
+		( bcftools mpileup -Ou -f {input.genome} {input.bam} --annotate 'FORMAT/DP,FORMAT/AD,FORMAT/ADF,FORMAT/ADR' | \
 			bcftools call --threads 1 -c | \
 			bcftools filter -sMixed -e '(DP4[0]+DP4[1])>10 & (DP4[2]+DP4[3])>10' - | \
 			bcftools filter -sDepth -e 'FORMAT/DP<10' - | \
 			bcftools filter -sLowQual -g3 -G10 -e '%QUAL<30 || RPB<0.1' - | \
-			bgzip > {output.vcf} && tabix -p vcf {output.vcf}
+			bgzip > {output.vcf} && tabix -p vcf {output.vcf} ) 2> {log}
 		"""
 
 rule variant_calling:

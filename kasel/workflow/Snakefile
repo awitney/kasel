@@ -20,6 +20,7 @@ ALIGNMENTS = join(OUTPUT, 'alignments')
 VCF        = join(OUTPUT, 'vcf')
 RESULTS    = join(OUTPUT, 'results')
 CALLERS    = join(OUTPUT, 'callers')
+LOGS       = 'kasel-logs'
 
 REF = 'NC_000962'
 
@@ -44,7 +45,7 @@ wildcard_constraints:
 
 # function to load read files within rules
 def get_seq(wildcards, reads):
-	print(wildcards)
+#	print(wildcards)
 	return sampledata.loc[(wildcards.sample), [reads]].dropna()[0]
 
 rule all:
