@@ -5,7 +5,7 @@ rule alignment_pe_old:
 	resources:
 		memory = config['alignment_pe']['memory']
 	params:
-		tempf = 'temp.{sample}'
+		tempf = 'temp.0.1.20.{sample}'
 	input:
 		genome = join(GENOMES, '{ref}.fna'),
 #		reads = lambda wildcards: READS[wildcards.sample],
