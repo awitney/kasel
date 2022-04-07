@@ -84,6 +84,11 @@ rule all:
 		expand(join(VCF, DATASET, OLD, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'), ref=REF, sample=SAMPLES, drug=DRUGS),
 		expand(join(RESULTS, DATASET, OLD, 'variants', 'resistance', '{ref}_' + DATASET + '_{drug}.tsv'), ref=REF, drug=DRUGS),
 		expand(join(RESULTS, DATASET, OLD, 'variants', 'resistance', '{ref}_' + DATASET + '.tsv'), ref=REF),
+		#
+		# Outputs
+		join(RESULTS, DATASET, 'gene-snps-all.tsv'),
+		join(RESULTS, DATASET, 'gene-snps-PTM.txt'),
+		join(RESULTS, DATASET, 'gene-snps-BDQ.txt'),
 
 rule testing:
 	input:

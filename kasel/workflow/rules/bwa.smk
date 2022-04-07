@@ -284,7 +284,7 @@ rule check_snps_all:
 	output:
 		join(RESULTS, DATASET, 'gene-snps-all.tsv'),
 	conda:
-		"alignment-bwa.yml"
+		"../envs/alignment.yml"
 	shell:
 		"""
 		for i in {input}; \
@@ -304,22 +304,27 @@ rule check_snps_bdq:
 		memory = config['default']['memory']
 	params:
 		dir	= DATA + '\/' + DATASET,
+		bedfile = workflow.source_path('../data/snps.Chromosome-BDQ.bed')
 	input:
-		expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
+		samples = expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES),
 	output:
 		join(RESULTS, DATASET, 'gene-snps-BDQ.txt'),
+	log:
+		join(LOGS, DATASET, 'check_snps_bdq.log')
 	conda:
-		"alignment-bwa.yml"
+		"../envs/alignment.yml"
 	shell:
 		"""
-		for i in {input}; \
+		echo {params.bedfile} > {log};
+		less {params.bedfile} >> {log};
+		for i in {input.samples}; \
 		do \
 			j=`echo $i | perl -p -e 's/{params.dir}\/NC_000962_(.+).ann.vcf.gz/$1/'`; \
 			echo "Sample: $j [File: $i]"; \
 			echo $'\n'; \
-			tabix -R scripts/snps.Chromosome-BDQ.bed $i; \
+			tabix -R {params.bedfile} $i; \
 			echo $'\n==============================\n'; \
-		done > {output}
+		done > {output} 2>> {log}
 		"""
 
 rule check_snps_ptm:
@@ -329,20 +334,25 @@ rule check_snps_ptm:
 		memory = config['default']['memory']
 	params:
 		dir	= DATA + '\/' + DATASET,
+		bedfile = workflow.source_path('../data/snps.Chromosome-PTM.bed')
 	input:
 		expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
 	output:
 		join(RESULTS, DATASET, 'gene-snps-PTM.txt'),
+	log:
+		join(LOGS, DATASET, 'check_snps_ptm.log')
 	conda:
-		"alignment-bwa.yml"
+		"../envs/alignment.yml"
 	shell:
 		"""
+		echo {params.bedfile} > {log};
+		less {params.bedfile} >> {log};
 		for i in {input}; \
 		do \
 			j=`echo $i | perl -p -e 's/{params.dir}\/NC_000962_(.+).ann.vcf.gz/$1/'`; \
 			echo "Sample: $j [File: $i]"; \
 			echo $'\n'; \
-			tabix -R scripts/snps.Chromosome-PTM.bed $i; \
+			tabix -R {params.bedfile} $i; \
 			echo $'\n==============================\n'; \
 		done > {output}
 		"""
