@@ -2,6 +2,8 @@
 rule mykrobe_pe:
 	threads:
 		1
+	resources:
+		memory = config['default']['memory']
 	params:
 		sample = '{sample}',
 		skel_dir = join(CALLERS, DATASET, 'mykrobe', '{sample}')
@@ -22,6 +24,8 @@ rule mykrobe_pe:
 rule mykrobe_se:
 	threads:
 		1
+	resources:
+		memory = config['default']['memory']
 	params:
 		sample = '{sample}',
 		skel_dir = join(CALLERS, DATASET, 'mykrobe', '{sample}')
