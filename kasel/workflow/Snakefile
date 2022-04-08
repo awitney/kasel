@@ -29,8 +29,8 @@ DRUGS = ['PTM', 'BDQ']
 DATASET = config['dataset']
 meta_file = config['meta_file']
 
-# set a directory prefix for old version samtools
-OLD = '0.1.19'
+# set a directory prefix for legacy version samtools
+OLD = '0.1.20'
 DATASETOLD = DATASET + '-' + OLD
 
 sampledata = pd.read_table(meta_file).set_index("sample", drop=False)
@@ -72,7 +72,7 @@ rule all:
 		#
 #		join(CALLERS, DATASET, 'MTBSeq', 'Classification', 'Strain_Classification.tab'),
 		#	
-		# for old version samtools/bcftools
+		# for legacy version samtools/bcftools
 		expand(join(ALIGNMENTS, DATASET, OLD, '{ref}_{sample}.bam'), ref=REF, sample=SAMPLES),
 		expand(join(VCF, DATASET, OLD, '{ref}_{sample}.all.vcf.gz'), ref=REF, sample=SAMPLES),
 		expand(join(VCF, DATASET, OLD, 'variants', '{ref}_{sample}.vcf.gz'), ref=REF, sample=SAMPLES),
