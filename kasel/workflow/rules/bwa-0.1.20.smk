@@ -1,5 +1,5 @@
 
-rule alignment_pe_old:
+rule alignment_pe_legacy:
 	threads:
 		config['alignment_pe']['threads']
 	resources:
@@ -25,7 +25,7 @@ rule alignment_pe_old:
 		samtools index {output.bam}
 		"""
 
-rule site_calling_old:
+rule site_calling_legacy:
 	threads:
 		config['site_calling']['threads']
 	resources:
@@ -45,7 +45,7 @@ rule site_calling_old:
 		( samtools mpileup -gf {input.genome} {input.bam} | bcftools view -cg - | bgzip > {output.vcf} && tabix -p vcf {output.vcf} ) 2>&1 > {log}
 		"""
 
-rule variant_calling_old:
+rule variant_calling_legacy:
 	threads:
 		config['variant_calling']['threads']
 	resources:
@@ -67,7 +67,7 @@ rule variant_calling_old:
 		rm {params.bcf}
 		"""
 
-rule snp_annotation_old:
+rule snp_annotation_legacy:
 	threads:
 		config['default']['threads']
 	resources:
@@ -83,7 +83,7 @@ rule snp_annotation_old:
         snpEff eff -no-downstream -no-upstream -no-utr -o vcf Mycobacterium_tuberculosis_h37rv {input} | bgzip > {output} && bcftools index {output}
 		"""
 
-rule snp_report_all_old:
+rule snp_report_all_legacy:
 	threads:
 		config['default']['threads']
 	resources:
@@ -100,7 +100,7 @@ rule snp_report_all_old:
 		perl -p -e 's/.+\/NC_000962_(.+).bam/$1/' {input.tsv} >> {output.tsv}
 		"""
 
-rule snp_report_old:
+rule snp_report_legacy:
 	threads:
 		config['default']['threads']
 	resources:
@@ -122,7 +122,7 @@ rule snp_report_old:
 		"""
 #			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 
 
-rule snp_report_resistance_all_old:
+rule snp_report_resistance_all_legacy:
 	threads:
 		config['default']['threads']
 	resources:
@@ -139,7 +139,7 @@ rule snp_report_resistance_all_old:
 		cat {input.tsv} >> {output.tsv}
 		"""
 
-rule snp_report_resistance_all_summary_old:
+rule snp_report_resistance_all_summary_legacy:
 	threads:
 		config['default']['threads']
 	resources:
@@ -160,7 +160,7 @@ rule snp_report_resistance_all_summary_old:
 		wc -l  $(find {params.finddir} -name "*_PTM*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ)_(.+).tsv:$3\t$2\t$1:' | sort -k2 >> {output.out}
 		"""
 
-rule snp_report_resistance_old:
+rule snp_report_resistance_legacy:
 	threads:
 		config['default']['threads']
 	resources:
@@ -184,7 +184,7 @@ rule snp_report_resistance_old:
 		rm {params.tmp}
 		"""
 
-rule stats_coverage_old:
+rule stats_coverage_legacy:
 	threads:
 		config['default']['threads']
 	resources:
@@ -202,7 +202,7 @@ rule stats_coverage_old:
 		for i in {input}; do echo -e $i","$(samtools depth -a $i | awk '{{sum+=$3}} END {{print sum/NR}}') | perl -pe 's/.+\/{params.ref}_(.+).bam/$1/'; done > {output}
 		"""
 
-rule stats_read_count_old:
+rule stats_read_count_legacy:
 	threads:
 		config['default']['threads']
 	resources:
@@ -221,7 +221,7 @@ rule stats_read_count_old:
 		for i in {input}; do echo -e $i","$(($(zcat $i | wc -l) / 4)) | perl -pe 's/{params.dir}\/(.+)_1.fastq.gz/$1/'; done > {output}
 		"""
 
-rule stats_combined_old:
+rule stats_combined_legacy:
 	threads:
 		config['default']['threads']
 	resources:
@@ -248,7 +248,7 @@ rule stats_combined_old:
 		cols = ['sample', 'counts', 'coverage']
 		df_all.to_csv(output[0], sep='\t', columns=cols, index=False)
 
-rule lineages_old:
+rule lineages_legacy:
 	threads:
 		config['default']['threads']
 	resources:
@@ -264,7 +264,7 @@ rule lineages_old:
 		for i in {input}; do perl scripts/check_lineages.pl scripts/lineages.txt $i; done > {output}
 		"""
 
-rule check_snps_all_old:
+rule check_snps_all_legacy:
 	threads:
 		config['default']['threads']
 	resources:
@@ -289,7 +289,7 @@ rule check_snps_all_old:
 		done > {output}
 		"""
 
-rule check_snps_bdq_old:
+rule check_snps_bdq_legacy:
 	threads:
 		config['default']['threads']
 	resources:
@@ -314,7 +314,7 @@ rule check_snps_bdq_old:
 		done > {output}
 		"""
 
-rule check_snps_ptm_old:
+rule check_snps_ptm_legacy:
 	threads:
 		config['default']['threads']
 	resources:
@@ -339,7 +339,7 @@ rule check_snps_ptm_old:
 		done > {output}
 		"""
 
-rule AMRPredict_old:
+rule AMRPredict_legacy:
 	threads:
 		1
 	params:
