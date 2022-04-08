@@ -1,3 +1,15 @@
+rule versions:
+	threads:
+		1
+	output:
+		join(VERSIONS, DATASET, 'alignment.txt')
+	conda:
+		"../envs/alignment.yml"
+	shell:
+		"""
+		bwa &> {output}
+		samtools --version >> {output} 
+		"""
 
 rule alignment_pe:
 	threads:
@@ -175,22 +187,25 @@ rule snp_report_resistance:
 		memory = config['default']['memory']
 	params:
 		string = join(ALIGNMENTS, DATASET, '{ref}_'),
+#		bed    = workflow.source_path('../data/snps.Chromosome-{drug}.bed'),
 		bed    = 'kasel/kasel/workflow/data/snps.Chromosome-{drug}.bed',
-		tmp    = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz.tmp'),
+		tmp    = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz'),
 	input:
 		vcf = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
 	output:
 		tsv = join(VCF, DATASET, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'),
+	log:
+		join(LOGS, DATASET, 'snp_report_resistance.{ref}.{drug}.{sample}.log')
 	conda:
 		"../envs/alignment.yml"
 	shell:
 		"""
-		bcftools filter -Oz -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} > {params.tmp}
-		bcftools index -f {params.tmp}
+		bcftools filter -Oz -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} > {params.tmp} 2> {log};
+		bcftools index -f {params.tmp} 2>> {log};
 		bcftools query -R {params.bed}  -f '[%SAMPLE]\t%POS\t[%GT]\t%REF\t%ALT{{0}}\t%TYPE\t%QUAL\t%FILTER\t%INFO/DP\t[%INFO/DP4]\t[%INFO/ANN]\n' -i 'GT="alt"' {params.tmp} | \
-			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 
-		rm {params.tmp}
+			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 2>> {log};
 		"""
+#		rm {params.tmp} 2>> {log}
 
 rule stats_coverage:
 	threads:

@@ -21,6 +21,7 @@ VCF        = join(OUTPUT, 'vcf')
 RESULTS    = join(OUTPUT, 'results')
 CALLERS    = join(OUTPUT, 'callers')
 LOGS       = join(OUTPUT, 'logs')
+VERSIONS   = join(OUTPUT, 'versions')
 
 REF = 'NC_000962'
 
@@ -89,6 +90,10 @@ rule all:
 		join(RESULTS, DATASET, 'gene-snps-all.tsv'),
 		join(RESULTS, DATASET, 'gene-snps-PTM.txt'),
 		join(RESULTS, DATASET, 'gene-snps-BDQ.txt'),
+		#
+		# Versions
+		#
+		join(VERSIONS, DATASET, 'alignment.txt'),
 
 rule testing:
 	input:
