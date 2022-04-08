@@ -20,7 +20,7 @@ ALIGNMENTS = join(OUTPUT, 'alignments')
 VCF        = join(OUTPUT, 'vcf')
 RESULTS    = join(OUTPUT, 'results')
 CALLERS    = join(OUTPUT, 'callers')
-LOGS       = 'kasel-logs'
+LOGS       = join(OUTPUT, 'logs')
 
 REF = 'NC_000962'
 
