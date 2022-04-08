@@ -64,6 +64,8 @@ def init_pipeline_parser():
 		'-cl', '--cluster', action="store_true", required=False, dest='cluster', help='Run on cluster with qsub')
 	parser_meta.add_argument(
 		'-c', '--cores', required=False, type=int, dest='cores', default=1, help='Number of cores')
+	parser_meta.add_argument(
+		'-u', '--until', required=False, dest='until', help='define specific rules to run')
 	parser_meta.set_defaults(func=run_subtool)
 
 

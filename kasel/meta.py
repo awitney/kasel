@@ -19,6 +19,7 @@ def run(parser, args):
 	dag = args.dag
 	cores = args.cores
 	cluster = args.cluster
+	until = args.until
 
 	logger.info("Pipeline started using: " + meta_file)
 
@@ -35,6 +36,11 @@ def run(parser, args):
 	if cluster == True:
 		params['cluster'] = "qsub -V -l h_rt=48:00:00 -l mem={resources.memory} -pe smp {threads}"
 
+	if until == None:
+		until = []
+	else:
+		until = [until]
+	
 	snakefile = os.path.join(thisdir, 'workflow','Snakefile')
 	
 	if not os.path.exists(snakefile):
@@ -42,8 +48,8 @@ def run(parser, args):
 		sys.exit(-1)
 
 	status = snakemake.snakemake(snakefile, printshellcmds=False, quiet=False, forceall=False, force_incomplete=True,
-									workdir=tempdir, config=params, nodes=cores, lock=False, dryrun=run, use_conda=True, 
-									cluster=params['cluster'], conda_frontend="conda", printdag=dag)
+									workdir=tempdir, config=params, cores=cores, nodes=cores, lock=False, dryrun=run, use_conda=True, 
+									cluster=params['cluster'], conda_frontend="conda", printdag=dag, until=until)
 
 	logger.info("Pipeline finished: " + str(status))
 
