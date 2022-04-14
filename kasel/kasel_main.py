@@ -13,6 +13,8 @@ from loguru import logger
 def run_subtool(parser, args):
 	if args.command == 'meta':
 		from . import meta as submodule
+	elif args.command == 'sample':
+		from . import sample as submodule
 
 	# run the chosen submodule.
 	submodule.run(parser, args)
@@ -21,16 +23,11 @@ def run_subtool(parser, args):
 class ArgumentParserWithDefaults(argparse.ArgumentParser):
 	def __init__(self, *args, **kwargs):
 		super(ArgumentParserWithDefaults, self).__init__(*args, **kwargs)
-		self.add_argument("-q", "--quiet", help="Do not output warnings to stderr",
-						action="store_true",
-						dest="quiet")
-		self.add_argument('-v', '--verbose', action="store_true", dest='verbose',
-						help='output extra logging information')
-		self.add_argument('--debug', action="store_true", dest='debug',
-						help='output debugging information')
-		self.add_argument('-t', '--cpus', type=int, dest='cpus', default=1,
-						help='number of cpus')
-
+		self.add_argument("-q", "--quiet", help="Do not output warnings to stderr", action="store_true", dest="quiet")
+		self.add_argument('-v', '--verbose', action="store_true", dest='verbose', help='output extra logging information')
+		self.add_argument('--debug', action="store_true", dest='debug', help='output debugging information')
+		self.add_argument('-t', '--cpus', type=int, dest='cpus', default=1, help='number of cpus')
+		self.add_argument('-r', '--run', action="store_false", required=False, dest='run', help='Run pipeline')
 
 def init_pipeline_parser():
 	"""Wraps the argparse parser initialisation.
@@ -57,8 +54,6 @@ def init_pipeline_parser():
 	parser_meta.add_argument(
 		'-d', '--dataset', required=True, dest='dataset', help='dataset')
 	parser_meta.add_argument(
-		'-r', '--run', action="store_false", required=False, dest='run', help='Run pipeline')
-	parser_meta.add_argument(
 		'--dag', action="store_true", required=False, dest='dag', help='Generate DAG diagram')
 	parser_meta.add_argument(
 		'-cl', '--cluster', action="store_true", required=False, dest='cluster', help='Run on cluster with qsub')
@@ -68,6 +63,25 @@ def init_pipeline_parser():
 		'-u', '--until', required=False, dest='until', help='define specific rules to run')
 	parser_meta.set_defaults(func=run_subtool)
 
+	# sample
+	parser_sample = subparsers.add_parser('sample', help='Sample subparser')
+
+	parser_sample.add_argument(
+		'-s', '--samples', required=True, dest='samples_file', help='Sample list file')
+	parser_sample.add_argument(
+		'-d', '--dataset', required=True, dest='dataset', help='dataset')
+	parser_sample.set_defaults(func=run_subtool)
+	parser_sample.add_argument(
+		'--dag', action="store_true", required=False, dest='dag', help='Generate DAG diagram')
+	parser_sample.add_argument(
+		'-cl', '--cluster', action="store_true", required=False, dest='cluster', help='Run on cluster with qsub')
+	parser_sample.add_argument(
+		'-c', '--cores', required=False, type=int, dest='cores', default=1, help='Number of cores')
+	parser_sample.add_argument(
+		'-u', '--until', required=False, dest='until', help='define specific rules to run')
+	parser_sample.add_argument(
+		'--nolegacy', required=False, action="store_true", dest='nolegacy', help='Switch off legacy pipeline')
+	parser_sample.set_defaults(func=run_subtool)
 
 	# return the parser
 	return parser
