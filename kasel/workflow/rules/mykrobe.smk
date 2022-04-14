@@ -14,11 +14,15 @@ rule mykrobe_pe:
 		r2 = lambda wildcards: get_seq(wildcards, 'reverse'),
 	output:
 		join(CALLERS, DATASET, 'mykrobe', '{sample}.results.csv')
+	log:
+		join(LOGS, DATASET, 'mykrobe_pe.{sample}.log')
+	message:
+		"Running mykrobe_pe for {wildcards.sample}"
 	conda:
 		"../envs/mykrobe.yml"
 	shell:
 		"""
-		mykrobe predict --skeleton_dir {params.skel_dir} {params.sample} tb -1 {input.r1} {input.r2} > {output}
+		mykrobe predict --skeleton_dir {params.skel_dir} {params.sample} tb -1 {input.r1} {input.r2} > {output} 2> {log}
 		"""
 
 rule mykrobe_se:

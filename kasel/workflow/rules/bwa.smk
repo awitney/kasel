@@ -3,12 +3,16 @@ rule versions:
 		1
 	output:
 		join(VERSIONS, DATASET, 'alignment.txt')
+	log:
+		join(LOGS, DATASET, 'versions.log')
+	message:
+		"Running alignment versions"
 	conda:
 		"../envs/alignment.yml"
 	shell:
 		"""
-		bwa &> {output}
-		samtools --version >> {output} 
+		( bwa &> {output}
+		samtools --version &>> {output}  ) &> {log}
 		"""
 
 rule alignment_pe:
@@ -29,6 +33,8 @@ rule alignment_pe:
 		bam = join(ALIGNMENTS, DATASET, '{ref}_{sample}.bam')
 	log:
 		join(LOGS, DATASET, 'alignment_pe.{ref}.{sample}.log')
+	message:
+		"Running alignment_pe for {wildcards.sample} mapping to {wildcards.ref}"
 	conda:
 		"../envs/alignment.yml"
 	shell:
@@ -50,6 +56,8 @@ rule site_calling:
 		vcf = join(VCF, DATASET, '{ref}_{sample}.all.vcf.gz')
 	log:
 		join(LOGS, DATASET, 'site_calling.{ref}.{sample}.log')
+	message:
+		"Running site_calling for {wildcards.sample} mapped to {wildcards.ref}"
 	conda:
 		"../envs/alignment.yml"
 	shell:
@@ -75,16 +83,20 @@ rule variant_calling:
 		bam = join(ALIGNMENTS, DATASET, '{ref}_{sample}.bam'),
 	output:
 		vcf = join(VCF, DATASET, 'variants', '{ref}_{sample}.vcf.gz')
+	log:
+		join(LOGS, DATASET, 'variant_calling.{ref}.{sample}.log')
+	message:
+		"Running variant_calling for {wildcards.sample} mapped to {wildcards.ref}"
 	conda:
 		"../envs/alignment.yml"
 	shell:
 		"""
-		bcftools mpileup -Ou -f {input.genome} {input.bam} --annotate 'FORMAT/DP,FORMAT/AD,FORMAT/ADF,FORMAT/ADR' | \
+		( bcftools mpileup -Ou -f {input.genome} {input.bam} --annotate 'FORMAT/DP,FORMAT/AD,FORMAT/ADF,FORMAT/ADR' | \
 			bcftools call --threads 1 -cv | \
 			bcftools filter -sMixed -e '(DP4[2]+DP4[3])/sum(DP4)<0.75 | (DP4[0]+DP4[1])>10' - | \
 			bcftools filter -sDepth -e 'FORMAT/DP<10' - | \
 			bcftools filter -sLowQual -g3 -G10 -e '%QUAL<30 || RPB<0.1' - | \
-			perl -p -e 's/^{params.ref}/Chromosome/' | bgzip > {output.vcf} && tabix -p vcf {output.vcf}
+			perl -p -e 's/^{params.ref}/Chromosome/' | bgzip > {output.vcf} && tabix -p vcf {output.vcf} ) 2> {log}
 		"""
 
 rule snp_annotation:
@@ -96,11 +108,15 @@ rule snp_annotation:
 		join(VCF, DATASET, 'variants', '{ref}_{sample}.vcf.gz'),
 	output:
 		join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
+	log:
+		join(LOGS, DATASET, 'snp_annotation.{ref}.{sample}.log')
+	message:
+		"Running snp_annotation for {wildcards.sample} mapped to {wildcards.ref}"
 	conda:
 		"../envs/alignment.yml"
 	shell:
 		"""
-        snpEff eff -no-downstream -no-upstream -no-utr -o vcf Mycobacterium_tuberculosis_h37rv {input} | bgzip > {output} && bcftools index {output}
+        ( snpEff eff -no-downstream -no-upstream -no-utr -o vcf Mycobacterium_tuberculosis_h37rv {input} | bgzip > {output} && bcftools index {output} ) &> {log}
 		"""
 
 rule snp_report_all:
@@ -112,6 +128,8 @@ rule snp_report_all:
 		tsv = expand(join(VCF, DATASET, 'variants/annotated', '{ref}_{sample}.tsv'), ref=REF, sample=SAMPLES),
 	output:
 		tsv = join(RESULTS, DATASET, 'variants', '{ref}_' + DATASET + '.tsv'),
+	message:
+		"Running snp_report_all for {wildcards.ref}"
 	conda:
 		"../envs/alignment.yml"
 	shell:
@@ -131,14 +149,18 @@ rule snp_report:
 		vcf = join(VCF, DATASET, 'variants/annotated', '{ref}_{sample}.ann.vcf.gz'),
 	output:
 		tsv = join(VCF, DATASET, 'variants/annotated', '{ref}_{sample}.tsv'),
+	log:
+		join(LOGS, DATASET, 'snp_report.{ref}.{sample}.log')
+	message:
+		"Running snp_report for {wildcards.sample} mapped to {wildcards.ref}"
 	conda:
 		"../envs/alignment.yml"
 	shell:
 		"""
-		bcftools index -f {input.vcf}
+		( bcftools index -f {input.vcf}
 		bcftools filter -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} | \
 			bcftools query -f '[%SAMPLE]\t%POS\t[%GT]\t%REF\t%ALT{{0}}\t%TYPE\t%QUAL\t%FILTER\t%INFO/DP\t[%INFO/DP4]\t[%INFO/ANN]\n' -i 'GT="alt"' - | \
-			perl -p -e 's/\|/\t/g' > {output.tsv} 
+			perl -p -e 's/\|/\t/g' > {output.tsv} ) &> {log}
 		"""
 #			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 
 
@@ -151,6 +173,8 @@ rule snp_report_resistance_all:
 		tsv = expand(join(VCF, DATASET, 'variants/annotated/resistance', '{ref}_{{drug}}_{sample}.tsv'), ref=REF, sample=SAMPLES),
 	output:
 		tsv = join(RESULTS, DATASET, 'variants/resistance', '{ref}_' + DATASET + '_{drug}.tsv'),
+	message:
+		"Running snp_report_resistance_all for {wildcards.ref} drug {wildcards.drug}"
 	conda:
 		"../envs/alignment.yml"
 	shell:
@@ -172,6 +196,8 @@ rule snp_report_resistance_all_summary:
 		tsv2 = expand(join(RESULTS, DATASET, 'variants/resistance', '{ref}_' + DATASET + '_PTM.tsv'), ref=REF),
 	output:
 		out = join(RESULTS, DATASET, 'variants/resistance', '{ref}_' + DATASET + '.tsv'),
+	message:
+		"Running snp_report_resistance_all_summary for {wildcards.ref}"
 	conda:
 		"../envs/alignment.yml"
 	shell:
@@ -196,6 +222,8 @@ rule snp_report_resistance:
 		tsv = join(VCF, DATASET, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'),
 	log:
 		join(LOGS, DATASET, 'snp_report_resistance.{ref}.{drug}.{sample}.log')
+	message:
+		"Running snp_report_resistance for {wildcards.sample} mapped to {wildcards.ref} drug {wildcards.drug}"
 	conda:
 		"../envs/alignment.yml"
 	shell:
@@ -203,9 +231,9 @@ rule snp_report_resistance:
 		bcftools filter -Oz -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} > {params.tmp} 2> {log};
 		bcftools index -f {params.tmp} 2>> {log};
 		bcftools query -R {params.bed}  -f '[%SAMPLE]\t%POS\t[%GT]\t%REF\t%ALT{{0}}\t%TYPE\t%QUAL\t%FILTER\t%INFO/DP\t[%INFO/DP4]\t[%INFO/ANN]\n' -i 'GT="alt"' {params.tmp} | \
-			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 2>> {log};
+		perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 2>> {log};
+		rm {params.tmp} 2>> {log}
 		"""
-#		rm {params.tmp} 2>> {log}
 
 rule stats_coverage:
 	threads:
@@ -218,6 +246,8 @@ rule stats_coverage:
 		expand(join(ALIGNMENTS, DATASET, REF + '_' + '{sample}.bam'), sample=SAMPLES)
 	output:
 		join(RESULTS, DATASET, 'stats.coverage.' + REF + '.txt'),
+	message:
+		"Running stats_coverage"
 	conda:
 		"../envs/alignment.yml"
 	shell:
@@ -237,6 +267,8 @@ rule stats_read_count:
 		sampledata['forward'],
 	output:
 		join(RESULTS, DATASET, 'stats.read-count.txt'),
+	message:
+		"Running stats_read_count"
 	conda:
 		"../envs/alignment.yml"
 	shell:
@@ -256,8 +288,10 @@ rule stats_combined:
 		coverage = rules.stats_coverage.output,
 	output:
 		join(RESULTS, DATASET, 'stats.txt'),
+	message:
+		"Running stats_combined"
 	run:
-		df_meta = pd.read_csv(meta_file, sep='\t')
+		df_samples = pd.read_csv(samples_file, sep='\t')
 
 		cols = ['file', 'counts']
 		df_counts = pd.read_csv(str(input.reads), names=cols)
@@ -265,7 +299,7 @@ rule stats_combined:
 		cols = ['sample', 'coverage']
 		df_coverage = pd.read_csv(str(input.coverage), names=cols)
 
-		df_new = pd.merge(df_meta, df_counts, left_on='forward', right_on='file')
+		df_new = pd.merge(df_samples, df_counts, left_on='forward', right_on='file')
 		df_all = pd.merge(df_new, df_coverage, on='sample')
 			
 		cols = ['sample', 'counts', 'coverage']
@@ -280,6 +314,8 @@ rule lineages:
 		expand(join(VCF, DATASET, REF + '_' + '{sample}.all.vcf.gz'), sample=SAMPLES)
 	output:
 		join(RESULTS, DATASET, 'lineages.txt'),
+	message:
+		"Running lineages"
 	conda:
 		"alignment-bwa.yml"
 	shell:
@@ -298,6 +334,8 @@ rule check_snps_all:
 		expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
 	output:
 		join(RESULTS, DATASET, 'gene-snps-all.tsv'),
+	message:
+		"Running check_snps_all"
 	conda:
 		"../envs/alignment.yml"
 	shell:
@@ -326,6 +364,8 @@ rule check_snps_bdq:
 		join(RESULTS, DATASET, 'gene-snps-BDQ.txt'),
 	log:
 		join(LOGS, DATASET, 'check_snps_bdq.log')
+	message:
+		"Running check_snps_bdq"
 	conda:
 		"../envs/alignment.yml"
 	shell:
@@ -356,6 +396,8 @@ rule check_snps_ptm:
 		join(RESULTS, DATASET, 'gene-snps-PTM.txt'),
 	log:
 		join(LOGS, DATASET, 'check_snps_ptm.log')
+	message:
+		"Running check_snps_ptm"
 	conda:
 		"../envs/alignment.yml"
 	shell:

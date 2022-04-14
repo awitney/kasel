@@ -15,12 +15,14 @@ rule tbprofiler_pe:
 	output:
 		join(CALLERS, DATASET, 'TB-profiler', 'results', '{sample}.results.txt')
 	log:
-		join(LOGS, DATASET, 'tbprofiler.{sample}.log')
+		join(LOGS, DATASET, 'tbprofiler_pe.{sample}.log')
+	message:
+		"Running tbprofiler_pe for {wildcards.sample}"
 	conda:
 		"../envs/tb-profiler.yml"
 	shell:
 		"""
-		tb-profiler profile --threads {threads} -1 {input.r1} -2 {input.r2}  -p {params.prefix} --txt --dir {params.outdir} 2>&1 > {log}
+		tb-profiler profile --threads {threads} -1 {input.r1} -2 {input.r2}  -p {params.prefix} --txt --dir {params.outdir} &> {log}
 		"""
 
 rule tbprofiler_collate:
@@ -35,10 +37,14 @@ rule tbprofiler_collate:
 		expand(join(CALLERS, DATASET, 'TB-profiler', 'results', '{sample}.results.txt'), sample=SAMPLES),
 	output:
 		join(CALLERS, DATASET, 'TB-profiler', 'tbprofiler.txt')
+	log:
+		join(LOGS, DATASET, 'tbprofiler_collate.log')
+	message:
+		"Running tbprofiler_collate"
 	conda:
 		"../envs/tb-profiler.yml"
 	shell:
 		"""
-		tb-profiler collate --dir {params.indir} --prefix {params.prefix}
+		tb-profiler collate --dir {params.indir} --prefix {params.prefix} &> {log}
 		"""
 

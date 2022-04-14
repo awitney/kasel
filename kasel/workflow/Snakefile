@@ -28,13 +28,13 @@ REF = 'NC_000962'
 DRUGS = ['PTM', 'BDQ']
 
 DATASET = config['dataset']
-meta_file = config['meta_file']
+samples_file = config['samples_file']
 
 # set a directory prefix for legacy version samtools
-OLD = '0.1.20'
-DATASETOLD = DATASET + '-' + OLD
+LEGACY = '0.1.20'
+DATASET_LEGACY = DATASET + '-' + LEGACY
 
-sampledata = pd.read_table(meta_file).set_index("sample", drop=False)
+sampledata = pd.read_table(samples_file).set_index("sample", drop=False)
 SAMPLES = sampledata['sample'].tolist()
 READS1 = sampledata['forward'].tolist()
 	
@@ -49,6 +49,24 @@ def get_seq(wildcards, reads):
 #	print(wildcards)
 	return sampledata.loc[(wildcards.sample), [reads]].dropna()[0]
 
+def fetch_legacy_files(nolegacy):
+
+	files = []
+	
+	if nolegacy == False:
+		files.append(expand(join(ALIGNMENTS, DATASET, LEGACY, '{ref}_{sample}.bam'), ref=REF, sample=SAMPLES))
+		files.append(expand(join(VCF, DATASET, LEGACY, '{ref}_{sample}.all.vcf.gz'), ref=REF, sample=SAMPLES))
+		files.append(expand(join(VCF, DATASET, LEGACY, 'variants', '{ref}_{sample}.vcf.gz'), ref=REF, sample=SAMPLES))
+		files.append(expand(join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'), ref=REF, sample=SAMPLES))
+		files.append(expand(join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.tsv'), ref=REF, sample=SAMPLES))
+		files.append(expand(join(RESULTS, DATASET, LEGACY, 'variants', '{ref}_' + DATASET + '.tsv'), ref=REF))
+		
+		files.append(expand(join(VCF, DATASET, LEGACY, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'), ref=REF, sample=SAMPLES, drug=DRUGS))
+		files.append(expand(join(RESULTS, DATASET, LEGACY, 'variants', 'resistance', '{ref}_' + DATASET + '_{drug}.tsv'), ref=REF, drug=DRUGS))
+		files.append(expand(join(RESULTS, DATASET, LEGACY, 'variants', 'resistance', '{ref}_' + DATASET + '.tsv'), ref=REF))
+	
+	return files
+
 rule all:
 	input:
 #		join(RESULTS, DATASET, 'stats.coverage.' + REF + '.txt'),
@@ -62,11 +80,13 @@ rule all:
 		expand(join(RESULTS, DATASET, 'variants', '{ref}_' + DATASET + '.tsv'), ref=REF),
 		#
 		# Drug specific SNPs
+		#
 		expand(join(VCF, DATASET, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'), ref=REF, sample=SAMPLES, drug=DRUGS),
 		expand(join(RESULTS, DATASET, 'variants', 'resistance', '{ref}_' + DATASET + '_{drug}.tsv'), ref=REF, drug=DRUGS),
 		expand(join(RESULTS, DATASET, 'variants', 'resistance', '{ref}_' + DATASET + '.tsv'), ref=REF),
 		#
 		# External callers
+		#
 		expand(join(CALLERS, DATASET, 'TB-profiler', 'results', '{sample}.results.txt'), sample=SAMPLES),
 		join(CALLERS, DATASET, 'TB-profiler', 'tbprofiler.txt'),
 		expand(join(CALLERS, DATASET, 'mykrobe', '{sample}.results.csv'), sample=SAMPLES),
@@ -74,34 +94,18 @@ rule all:
 #		join(CALLERS, DATASET, 'MTBSeq', 'Classification', 'Strain_Classification.tab'),
 		#	
 		# for legacy version samtools/bcftools
-		expand(join(ALIGNMENTS, DATASET, OLD, '{ref}_{sample}.bam'), ref=REF, sample=SAMPLES),
-		expand(join(VCF, DATASET, OLD, '{ref}_{sample}.all.vcf.gz'), ref=REF, sample=SAMPLES),
-		expand(join(VCF, DATASET, OLD, 'variants', '{ref}_{sample}.vcf.gz'), ref=REF, sample=SAMPLES),
-		expand(join(VCF, DATASET, OLD, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'), ref=REF, sample=SAMPLES),
-		expand(join(VCF, DATASET, OLD, 'variants', 'annotated', '{ref}_{sample}.tsv'), ref=REF, sample=SAMPLES),
-		expand(join(RESULTS, DATASET, OLD, 'variants', '{ref}_' + DATASET + '.tsv'), ref=REF),
+		#
+		fetch_legacy_files(config['nolegacy']),
 		#
 		# Drug specific SNPs
-		expand(join(VCF, DATASET, OLD, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'), ref=REF, sample=SAMPLES, drug=DRUGS),
-		expand(join(RESULTS, DATASET, OLD, 'variants', 'resistance', '{ref}_' + DATASET + '_{drug}.tsv'), ref=REF, drug=DRUGS),
-		expand(join(RESULTS, DATASET, OLD, 'variants', 'resistance', '{ref}_' + DATASET + '.tsv'), ref=REF),
 		#
-		# Outputs
 		join(RESULTS, DATASET, 'gene-snps-all.tsv'),
 		join(RESULTS, DATASET, 'gene-snps-PTM.txt'),
 		join(RESULTS, DATASET, 'gene-snps-BDQ.txt'),
 		#
 		# Versions
 		#
-		join(VERSIONS, DATASET, 'alignment.txt'),
-
-rule testing:
-	input:
-		'testing2'
-	output:
-		'testing'
-	run:
-		shell("touch testing")
+#		join(VERSIONS, DATASET, 'alignment.txt'),
 
 include: join('rules', "bwa.smk")
 include: join('rules', "bwa-0.1.20.smk")
