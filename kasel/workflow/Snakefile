@@ -3,6 +3,7 @@
 import  os
 import  sys
 import  re
+import  pathlib
 import  pandas as pd
 from    os.path import join as join
 from    snakemake.utils import validate, min_version
@@ -22,6 +23,15 @@ RESULTS    = join(OUTPUT, 'results')
 CALLERS    = join(OUTPUT, 'callers')
 LOGS       = join(OUTPUT, 'logs')
 VERSIONS   = join(OUTPUT, 'versions')
+TMP        = join(OUTPUT, 'tmp')
+
+# set a directory prefix for legacy version samtools
+#DATASET_LEGACY = DATASET + '-' + LEGACY
+LEGACY     = '0.1.20'
+
+# Create temp directory
+pathlib.Path(TMP).mkdir(parents=True, exist_ok=True) 
+pathlib.Path(TMP + '/' + LEGACY).mkdir(parents=True, exist_ok=True) 
 
 REF = 'NC_000962'
 
@@ -30,9 +40,6 @@ DRUGS = ['PTM', 'BDQ']
 DATASET = config['dataset']
 samples_file = config['samples_file']
 
-# set a directory prefix for legacy version samtools
-LEGACY = '0.1.20'
-DATASET_LEGACY = DATASET + '-' + LEGACY
 
 sampledata = pd.read_table(samples_file).set_index("sample", drop=False)
 SAMPLES = sampledata['sample'].tolist()

@@ -6,7 +6,8 @@ rule mykrobe_pe:
 		memory = config['default']['memory']
 	params:
 		sample = '{sample}',
-		skel_dir = join(CALLERS, DATASET, 'mykrobe', '{sample}')
+		skel_dir = join(CALLERS, DATASET, 'mykrobe', '{sample}'),
+		tmp = TMP,
 	input:
 #		r1 = join(DATA, DATASET, '{sample}_1.fastq.gz'),
 #		r2 = join(DATA, DATASET, '{sample}_2.fastq.gz')
@@ -22,7 +23,7 @@ rule mykrobe_pe:
 		"../envs/mykrobe.yml"
 	shell:
 		"""
-		mykrobe predict --skeleton_dir {params.skel_dir} {params.sample} tb -1 {input.r1} {input.r2} > {output} 2> {log}
+		mykrobe predict --tmp {params.tmp} --skeleton_dir {params.skel_dir} {params.sample} tb -1 {input.r1} {input.r2} > {output} 2> {log}
 		"""
 
 rule mykrobe_se:
@@ -32,7 +33,8 @@ rule mykrobe_se:
 		memory = config['default']['memory']
 	params:
 		sample = '{sample}',
-		skel_dir = join(CALLERS, DATASET, 'mykrobe', '{sample}')
+		skel_dir = join(CALLERS, DATASET, 'mykrobe', '{sample}'),
+		tmp = TMP,
 	input:
 		r1 = join(DATA, DATASET, '{sample}.fastq.gz'),
 	output:
@@ -41,5 +43,5 @@ rule mykrobe_se:
 		"../envs/mykrobe.yml"
 	shell:
 		"""
-		mykrobe predict --skeleton_dir {params.skel_dir} {params.sample} tb -1 {input.r1} > {output}
+		mykrobe predict --tmp {params.tmp} --skeleton_dir {params.skel_dir} {params.sample} tb -1 {input.r1} > {output}
 		"""
