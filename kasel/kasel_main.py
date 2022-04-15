@@ -28,6 +28,7 @@ class ArgumentParserWithDefaults(argparse.ArgumentParser):
 		self.add_argument('--debug', action="store_true", dest='debug', help='output debugging information')
 		self.add_argument('-t', '--cpus', type=int, dest='cpus', default=1, help='number of cpus')
 		self.add_argument('-r', '--run', action="store_false", required=False, dest='run', help='Run pipeline')
+		self.add_argument('--summary', action="store_true", required=False, dest='summary', help='Show summary output')
 
 def init_pipeline_parser():
 	"""Wraps the argparse parser initialisation.
@@ -81,6 +82,9 @@ def init_pipeline_parser():
 		'-u', '--until', required=False, dest='until', help='define specific rules to run')
 	parser_sample.add_argument(
 		'--nolegacy', required=False, action="store_true", dest='nolegacy', help='Switch off legacy pipeline')
+	parser_sample.add_argument(
+		'--list-params-changes', required=False, action="store_true", dest='list_params_changes', help='List params changes')
+
 	parser_sample.set_defaults(func=run_subtool)
 
 	# return the parser

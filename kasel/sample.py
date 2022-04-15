@@ -20,6 +20,9 @@ def run(parser, args):
 #	cluster = args.cluster
 	until = args.until
 	nolegacy = args.nolegacy
+	verbose = args.verbose
+	list_params_changes = args.list_params_changes
+	summary = args.summary
 
 	logger.info("Pipeline started using: " + samples_file)
 
@@ -36,7 +39,7 @@ def run(parser, args):
 	
 #	if cluster == True:
 #		params['cluster'] = "qsub -V -l h_rt=48:00:00 -l mem={resources.memory} -pe smp {threads}"
-
+	
 	if until == None:
 		until = []
 	else:
@@ -48,7 +51,8 @@ def run(parser, args):
 		logger.error("Cannot find snakefile at {}\n".format(snakefile))
 		sys.exit(-1)
 
-	status = snakemake.snakemake(snakefile, printshellcmds=False, quiet=False, forceall=False, force_incomplete=True,
+	status = snakemake.snakemake(snakefile, printshellcmds=verbose, printreason=verbose, quiet=False, forceall=False, force_incomplete=True,
+									list_params_changes=list_params_changes, summary=summary,
 									workdir=tempdir, config=params, cores=cores, nodes=cores, lock=False, dryrun=run, use_conda=True, 
 									cluster=params['cluster'], conda_frontend="conda", printdag=dag, until=until)
 
