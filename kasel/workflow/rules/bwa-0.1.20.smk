@@ -5,7 +5,7 @@ rule alignment_pe_legacy:
 	resources:
 		memory = config['alignment_pe']['memory']
 	params:
-		tempf = 'temp.0.1.20.{sample}'
+		tmp = join(TMP, LEGACY, 'temp.{ref}_{sample}'),
 	input:
 		genome = join(GENOMES, '{ref}.fna'),
 #		reads = lambda wildcards: READS[wildcards.sample],
@@ -14,7 +14,7 @@ rule alignment_pe_legacy:
 		r1 = lambda wildcards: get_seq(wildcards, 'forward'),
 		r2 = lambda wildcards: get_seq(wildcards, 'reverse'),
 	output:
-		bam = join(ALIGNMENTS, DATASET, LEGACY, '{ref}_{sample}.bam')
+		bam = join(ALIGNMENTS, DATASET, LEGACY, '{ref}_{sample}.bam'),
 	log:
 		join(LOGS, DATASET, LEGACY, 'alignment_pe.{ref}.{sample}.log')
 	message:
@@ -23,7 +23,7 @@ rule alignment_pe_legacy:
 		"../envs/alignment-0.1.20.yml"
 	shell:
 		"""
-		( bwa mem -t {threads} {input.genome} {input.r1} {input.r2} | samtools view -bS - | samtools sort -o - {params.tempf} - | samtools rmdup - - > {output.bam} ) 2> {log}
+		( bwa mem -t {threads} {input.genome} {input.r1} {input.r2} | samtools view -bS - | samtools sort -o - {params.tmp} - | samtools rmdup - - > {output.bam} ) 2> {log}
 		samtools index {output.bam}
 		"""
 
@@ -135,7 +135,7 @@ rule snp_report_legacy:
 		"""
 		( bcftools index -f {input.vcf}
 		bcftools filter -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} | \
-			bcftools query -f '[%SAMPLE]\t%POS\t[%GT]\t%REF\t%ALT{{0}}\t%TYPE\t%QUAL\t%FILTER\t%INFO/DP\t[%INFO/DP4]\t[%INFO/ANN]\n' -i 'GT="alt"' - | \
+			bcftools query -f '[%SAMPLE]\\t%POS\\t[%GT]\\t%REF\\t%ALT{{0}}\\t%TYPE\\t%QUAL\\t%FILTER\\t%INFO/DP\\t[%INFO/DP4]\\t[%INFO/ANN]\\n' -i 'GT="alt"' - | \
 			perl -p -e 's/\|/\t/g' > {output.tsv} ) &> {log}
 		"""
 #			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 
@@ -182,6 +182,30 @@ rule snp_report_resistance_all_summary_legacy:
 		wc -l  $(find {params.finddir} -name "*_PTM*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ)_(.+).tsv:$3\t$2\t$1:' | sort -k2 >> {output.out}
 		"""
 
+rule snp_annotation_filter_legacy:
+	threads:
+		config['default']['threads']
+	resources:
+		memory = config['default']['memory']
+	input:
+		vcf = join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
+	output:
+		tmp = temp(join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz')),
+		csi = temp(join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi')),
+	log:
+		join(LOGS, DATASET, 'snp_annotation_filter_legacy.{ref}.{sample}.log')
+	message:
+		"Running snp_annotation_filter_legacy for {wildcards.sample} mapped to {wildcards.ref}"
+	conda:
+		"../envs/alignment.yml"
+	shell:
+		"""
+		echo "Starting snp_annotation_filter_legacy" > {log}
+		bcftools filter -Oz -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} > {output.tmp} 2>> {log};
+		bcftools index -f {output.tmp} 2>> {log};
+		echo "Finished snp_annotation_filter_legacy" >> {log}
+		"""
+
 rule snp_report_resistance_legacy:
 	threads:
 		config['default']['threads']
@@ -190,9 +214,9 @@ rule snp_report_resistance_legacy:
 	params:
 		string = join(ALIGNMENTS, DATASET, LEGACY, '{ref}_'),
 		bed    = 'kasel/kasel/workflow/data/snps.Chromosome-{drug}.bed',
-		tmp    = join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz.tmp'),
 	input:
-		vcf = join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
+		tmp = join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz'),
+		csi = join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi'),
 	output:
 		tsv = join(VCF, DATASET, LEGACY, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'),
 	log:
@@ -203,11 +227,10 @@ rule snp_report_resistance_legacy:
 		"../envs/alignment.yml"
 	shell:
 		"""
-		bcftools filter -Oz -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} > {params.tmp} 2> {log}
-		bcftools index -f {params.tmp} 2>> {log}
-		bcftools query -R {params.bed}  -f '[%SAMPLE]\t%POS\t[%GT]\t%REF\t%ALT{{0}}\t%TYPE\t%QUAL\t%FILTER\t%INFO/DP\t[%INFO/DP4]\t[%INFO/ANN]\n' -i 'GT="alt"' {params.tmp} | \
+		echo "Starting snp_report_resistance_legacy" > {log}
+		bcftools query -R {params.bed}  -f '[%SAMPLE]\t%POS\t[%GT]\t%REF\t%ALT{{0}}\t%TYPE\t%QUAL\t%FILTER\t%INFO/DP\t[%INFO/DP4]\t[%INFO/ANN]\n' -i 'GT="alt"' {input.tmp} | \
 			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 2>> {log}
-		rm {params.tmp} 2>> {log}
+		echo "Finished snp_report_resistance_legacy" >> {log}
 		"""
 
 rule stats_coverage_legacy:

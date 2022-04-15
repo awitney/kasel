@@ -21,7 +21,7 @@ rule alignment_pe:
 	resources:
 		memory = config['alignment_pe']['memory']
 	params:
-		tempf = 'temp.{sample}'
+		tmp = join(TMP, 'temp.{ref}_{sample}'),
 	input:
 		genome = join(GENOMES, '{ref}.fna'),
 #		reads = lambda wildcards: READS[wildcards.sample],
@@ -30,7 +30,7 @@ rule alignment_pe:
 		r1 = lambda wildcards: get_seq(wildcards, 'forward'),
 		r2 = lambda wildcards: get_seq(wildcards, 'reverse'),
 	output:
-		bam = join(ALIGNMENTS, DATASET, '{ref}_{sample}.bam')
+		bam = join(ALIGNMENTS, DATASET, '{ref}_{sample}.bam'),
 	log:
 		join(LOGS, DATASET, 'alignment_pe.{ref}.{sample}.log')
 	message:
@@ -39,7 +39,7 @@ rule alignment_pe:
 		"../envs/alignment.yml"
 	shell:
 		"""
-		( bwa mem -t {threads} {input.genome} {input.r1} {input.r2} | samtools view -bS - | samtools sort -T {params.tempf} - | samtools rmdup - - > {output.bam} ) 2> {log}
+		( bwa mem -t {threads} {input.genome} {input.r1} {input.r2} | samtools view -bS - | samtools sort -T {params.tmp} - | samtools rmdup - - > {output.bam} ) 2> {log}
 		samtools index {output.bam}
 		"""
 
@@ -206,6 +206,30 @@ rule snp_report_resistance_all_summary:
 		wc -l  $(find {params.finddir} -name "*_PTM*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ)_(.+).tsv:$3\t$2\t$1:' | sort -k2 >> {output.out}
 		"""
 
+rule snp_annotation_filter:
+	threads:
+		config['default']['threads']
+	resources:
+		memory = config['default']['memory']
+	input:
+		vcf = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
+	output:
+		tmp = temp(join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz')),
+		csi = temp(join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi')),
+	log:
+		join(LOGS, DATASET, 'snp_annotation_filter.{ref}.{sample}.log')
+	message:
+		"Running snp_annotation_filter for {wildcards.sample} mapped to {wildcards.ref}"
+	conda:
+		"../envs/alignment.yml"
+	shell:
+		"""
+		echo "Starting snp_annotation_filter" > {log}
+		bcftools filter -Oz -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} > {output.tmp} 2>> {log};
+		bcftools index -f {output.tmp} 2>> {log};
+		echo "Finished snp_annotation_filter" >> {log}
+		"""
+
 rule snp_report_resistance:
 	threads:
 		config['default']['threads']
@@ -215,9 +239,9 @@ rule snp_report_resistance:
 		string = join(ALIGNMENTS, DATASET, '{ref}_'),
 #		bed    = workflow.source_path('../data/snps.Chromosome-{drug}.bed'),
 		bed    = 'kasel/kasel/workflow/data/snps.Chromosome-{drug}.bed',
-		tmp    = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz'),
 	input:
-		vcf = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
+		tmp = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz'),
+		csi = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi'),
 	output:
 		tsv = join(VCF, DATASET, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'),
 	log:
@@ -228,11 +252,10 @@ rule snp_report_resistance:
 		"../envs/alignment.yml"
 	shell:
 		"""
-		bcftools filter -Oz -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} > {params.tmp} 2> {log};
-		bcftools index -f {params.tmp} 2>> {log};
-		bcftools query -R {params.bed}  -f '[%SAMPLE]\t%POS\t[%GT]\t%REF\t%ALT{{0}}\t%TYPE\t%QUAL\t%FILTER\t%INFO/DP\t[%INFO/DP4]\t[%INFO/ANN]\n' -i 'GT="alt"' {params.tmp} | \
-		perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 2>> {log};
-		rm {params.tmp} 2>> {log}
+		echo "Starting snp_report_resistance" > {log}
+		bcftools query -R {params.bed}  -f '[%SAMPLE]\\t%POS\\t[%GT]\\t%REF\\t%ALT{{0}}\\t%TYPE\\t%QUAL\\t%FILTER\\t%INFO/DP\\t[%INFO/DP4]\\t[%INFO/ANN]\\n' -i 'GT="alt"' {input.tmp} | \
+			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 2>> {log};
+		echo "Finished snp_report_resistance" >> {log}
 		"""
 
 rule stats_coverage:
