@@ -15,19 +15,17 @@ with open(os.path.join(HERE, "requirements.txt"), "r") as f:
 
 setup(
     name="kasel",
+    author="Adam Witney",
+    description='A toolset for working with TB sequence data',
+    long_description=long_description,
+	url="https://github.com/awitney/kasel",
     version=version,
     install_requires=install_requires,
     requires=['python (>=3.5)'],
     packages=['kasel'],
-#    scripts=['kasel/scripts/custom_logger.py'],
-    author="Adam Witney",
-    description='A toolset for working with TB sequence data',
-    long_description=long_description,
-    url="https://kasel.html",
-    package_dir={'kasel': "kasel"},
-    package_data={'kasel': []},
-    zip_safe=False,
+    package_data={'kasel': ['workflow/Snakefile','workflow/**/*']},
     include_package_data=True,
+    zip_safe=False,
     entry_points={
         'console_scripts': [
             'kasel=kasel.kasel_main:main',
