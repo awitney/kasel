@@ -17,7 +17,7 @@ def run(parser, args):
 	run = args.run
 	dag = args.dag
 	cores = args.cores
-#	cluster = args.cluster
+	cluster = args.cluster
 	until = args.until
 	nolegacy = args.nolegacy
 	verbose = args.verbose
@@ -37,8 +37,8 @@ def run(parser, args):
 		"nolegacy": nolegacy
 	}
 	
-#	if cluster == True:
-#		params['cluster'] = "qsub -V -l h_rt=48:00:00 -l mem={resources.memory} -pe smp {threads}"
+	if cluster == True:
+		params['cluster'] = "qsub -V -l h_rt=48:00:00 -l mem={resources.memory} -pe smp {threads}"
 	
 	if until == None:
 		until = []
@@ -56,5 +56,5 @@ def run(parser, args):
 									workdir=tempdir, config=params, cores=cores, nodes=cores, lock=False, dryrun=run, use_conda=True, 
 									cluster=params['cluster'], conda_frontend="conda", printdag=dag, until=until)
 
-	logger.info("Pipeline finished: " + str(status))
+	logger.info("Pipeline finished")
 
