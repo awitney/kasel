@@ -380,7 +380,8 @@ rule check_snps_bdq:
 		memory = config['default']['memory']
 	params:
 		dir	= DATA + '\/' + DATASET,
-		bedfile = workflow.source_path('../data/snps.Chromosome-BDQ.bed')
+#		bedfile = workflow.source_path('../data/snps.Chromosome-BDQ.bed')
+		bedfile    = 'kasel/kasel/workflow/data/snps.Chromosome-BDQ.bed',
 	input:
 		samples = expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES),
 	output:
@@ -412,7 +413,8 @@ rule check_snps_ptm:
 		memory = config['default']['memory']
 	params:
 		dir	= DATA + '\/' + DATASET,
-		bedfile = workflow.source_path('../data/snps.Chromosome-PTM.bed')
+#		bedfile = workflow.source_path('../data/snps.Chromosome-PTM.bed')
+		bedfile = 'kasel/kasel/workflow/data/snps.Chromosome-PTM.bed',
 	input:
 		expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
 	output:
