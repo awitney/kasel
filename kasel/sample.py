@@ -13,7 +13,7 @@ from loguru import logger
 def run(parser, args):
 	
 	samples_file = args.samples_file
-	DATASET = args.dataset
+	dataset = args.dataset
 	run = args.run
 	dag = args.dag
 	cores = args.cores
@@ -25,27 +25,43 @@ def run(parser, args):
 	summary = args.summary
 
 	logger.info("Pipeline started using: " + samples_file)
-
-	thisdir = os.path.abspath(os.path.dirname(__file__))
-	tempdir = ''
-
+	
+	# Define initial config parameters
 	params = {
-		"dataset": DATASET,
+		"dataset": dataset,
 		"samples_file": samples_file,
 		"output": 'pipeline',
 		"cluster": False,
 		"nolegacy": nolegacy
 	}
 	
+	# Read config file
+	with open('kasel-config.yml', "r") as stream:
+		try:
+			config = yaml.safe_load(stream)
+		except yaml.YAMLError as exc:
+			logger.error("Unable to load config file: " + str(exc))
+
+	# Fetch cluster command
 	if cluster == True:
-		params['cluster'] = "qsub -V -l h_rt=48:00:00 -l mem={resources.memory} -pe smp {threads}"
-		params['cluster'] = "qsub -V -l walltime=48:00:00,nodes=1:ppn={threads}"
-	
+		try:
+			params['cluster'] = config['cluster']
+		except:
+			logger.warning("No cluster config parameter found, defaulting to qsub")
+			params['cluster'] = 'qsub'
+		
+		logger.info("Cluster command: " + params['cluster'])
+
+	# Check if specific rules called
 	if until == None:
 		until = []
 	else:
 		until = [until]
 	
+	# Fetching current diractory
+	thisdir = os.path.abspath(os.path.dirname(__file__))
+	tempdir = ''
+
 	snakefile = os.path.join(thisdir, 'workflow','Snakefile')
 	
 	if not os.path.exists(snakefile):
@@ -56,6 +72,9 @@ def run(parser, args):
 									list_params_changes=list_params_changes, summary=summary, keepgoing=True, latency_wait=100,
 									workdir=tempdir, config=params, cores=cores, nodes=cores, lock=False, dryrun=run, use_conda=True, 
 									cluster=params['cluster'], conda_frontend="conda", printdag=dag, until=until)
-
-	logger.info("Pipeline finished")
+	
+	if status == True:
+		logger.info("Pipeline finished")
+	else:
+		logger.error("Pipeline finished with errors")
 
