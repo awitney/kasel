@@ -94,7 +94,7 @@ rule all:
 		#
 		# External callers
 		#
-		expand(join(CALLERS, DATASET, 'TB-profiler', 'results', '{sample}.results.txt'), sample=SAMPLES),
+		expand(join(CALLERS, DATASET, 'TB-profiler', '{sample}', 'results', '{sample}.results.txt'), sample=SAMPLES),
 		join(CALLERS, DATASET, 'TB-profiler', 'tbprofiler.txt'),
 		expand(join(CALLERS, DATASET, 'mykrobe', '{sample}.results.csv'), sample=SAMPLES),
 		#
