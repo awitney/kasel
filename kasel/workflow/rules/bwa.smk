@@ -24,9 +24,6 @@ rule alignment_pe:
 		tmp = join(TMP, 'temp.{ref}_{sample}'),
 	input:
 		genome = join(GENOMES, '{ref}.fna'),
-#		reads = lambda wildcards: READS[wildcards.sample],
-#		r1 = join(DATA, DATASET, '{sample}_1.fastq.gz'),
-#		r2 = join(DATA, DATASET, '{sample}_2.fastq.gz')
 		r1 = lambda wildcards: get_seq(wildcards, 'forward'),
 		r2 = lambda wildcards: get_seq(wildcards, 'reverse'),
 	output:
@@ -50,7 +47,6 @@ rule site_calling:
 		memory = config['site_calling']['memory']
 	input:
 		genome = join(GENOMES, '{ref}.fna'),
-#		bam = rules.alignment.output.bam
 		bam = join(ALIGNMENTS, DATASET, '{ref}_{sample}.bam'),
 	output:
 		vcf = join(VCF, DATASET, '{ref}_{sample}.all.vcf.gz')
@@ -79,7 +75,6 @@ rule variant_calling:
 		ref = '{ref}.3'
 	input:
 		genome = join(GENOMES, '{ref}.fna'),
-#		bam = rules.alignment.output.bam
 		bam = join(ALIGNMENTS, DATASET, '{ref}_{sample}.bam'),
 	output:
 		vcf = join(VCF, DATASET, 'variants', '{ref}_{sample}.vcf.gz')
@@ -289,7 +284,6 @@ rule stats_read_count:
 	params:
 		dir	= DATA + '\/' + DATASET,
 	input:
-##		expand(join(DATA, DATASET, '{sample}_1.fastq.gz'), sample=SAMPLES)
 		sampledata['forward'],
 	output:
 		join(RESULTS, DATASET, 'stats.read-count.txt'),

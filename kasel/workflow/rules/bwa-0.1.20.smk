@@ -8,9 +8,6 @@ rule alignment_pe_legacy:
 		tmp = join(TMP, LEGACY, 'temp.{ref}_{sample}'),
 	input:
 		genome = join(GENOMES, '{ref}.fna'),
-#		reads = lambda wildcards: READS[wildcards.sample],
-#		r1 = join(DATA, DATASET, '{sample}_1.fastq.gz'),
-#		r2 = join(DATA, DATASET, '{sample}_2.fastq.gz')
 		r1 = lambda wildcards: get_seq(wildcards, 'forward'),
 		r2 = lambda wildcards: get_seq(wildcards, 'reverse'),
 	output:
@@ -34,7 +31,6 @@ rule site_calling_legacy:
 		memory = config['site_calling']['memory']
 	input:
 		genome = join(GENOMES, '{ref}.fna'),
-#		bam = rules.alignment.output.bam
 		bam = join(ALIGNMENTS, DATASET, LEGACY, '{ref}_{sample}.bam'),
 	output:
 		vcf = join(VCF, DATASET, LEGACY, '{ref}_{sample}.all.vcf.gz')
@@ -59,7 +55,6 @@ rule variant_calling_legacy:
 		bcf = join(VCF, DATASET, LEGACY, '{ref}_{sample}.bcf')
 	input:
 		genome = join(GENOMES, '{ref}.fna'),
-#		bam = rules.alignment.output.bam
 		bam = join(ALIGNMENTS, DATASET, LEGACY, '{ref}_{sample}.bam'),
 	output:
 		vcf = join(VCF, DATASET, LEGACY, 'variants', '{ref}_{sample}.vcf.gz')
@@ -138,7 +133,6 @@ rule snp_report_legacy:
 			bcftools query -f '[%SAMPLE]\\t%POS\\t[%GT]\\t%REF\\t%ALT{{0}}\\t%TYPE\\t%QUAL\\t%FILTER\\t%INFO/DP\\t[%INFO/DP4]\\t[%INFO/ANN]\\n' -i 'GT="alt"' - | \
 			perl -p -e 's/\|/\t/g' > {output.tsv} ) &> {log}
 		"""
-#			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 
 
 rule snp_report_resistance_all_legacy:
 	threads:
@@ -261,7 +255,6 @@ rule stats_read_count_legacy:
 	params:
 		dir	= DATA + '\/' + DATASET +'\/' + LEGACY,
 	input:
-##		expand(join(DATA, DATASET, '{sample}_1.fastq.gz'), sample=SAMPLES)
 		sampledata['forward'],
 	output:
 		join(RESULTS, DATASET, LEGACY, 'stats.read-count.txt'),
