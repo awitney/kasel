@@ -190,8 +190,8 @@ rule snp_annotation_filter_legacy:
 	input:
 		vcf = join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
 	output:
-		tmp = temp(join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz')),
-		csi = temp(join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi')),
+		tmp = join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz'),
+		csi = join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi'),
 	log:
 		join(LOGS, DATASET, 'snp_annotation_filter_legacy.{ref}.{sample}.log')
 	message:
@@ -213,7 +213,7 @@ rule snp_report_resistance_legacy:
 		memory = config['default']['memory']
 	params:
 		string = join(ALIGNMENTS, DATASET, LEGACY, '{ref}_'),
-		bed    = 'kasel/kasel/workflow/data/snps.Chromosome-{drug}.bed',
+		bedfile = join(config['kasel-data'], 'snps.Chromosome-{drug}.bed'),
 	input:
 		tmp = join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz'),
 		csi = join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi'),
@@ -228,7 +228,7 @@ rule snp_report_resistance_legacy:
 	shell:
 		"""
 		echo "Starting snp_report_resistance_legacy" > {log}
-		bcftools query -R {params.bed}  -f '[%SAMPLE]\t%POS\t[%GT]\t%REF\t%ALT{{0}}\t%TYPE\t%QUAL\t%FILTER\t%INFO/DP\t[%INFO/DP4]\t[%INFO/ANN]\n' -i 'GT="alt"' {input.tmp} | \
+		bcftools query -R {params.bedfile}  -f '[%SAMPLE]\t%POS\t[%GT]\t%REF\t%ALT{{0}}\t%TYPE\t%QUAL\t%FILTER\t%INFO/DP\t[%INFO/DP4]\t[%INFO/ANN]\n' -i 'GT="alt"' {input.tmp} | \
 			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 2>> {log}
 		echo "Finished snp_report_resistance_legacy" >> {log}
 		"""
@@ -328,6 +328,7 @@ rule check_snps_all_legacy:
 		memory = config['default']['memory']
 	params:
 		dir	= DATA + '\/' + DATASET + '\/' + LEGACY,
+		bedfile = join(config['kasel-data'], 'snps.Chromosome-all.bed'),
 	input:
 		expand(join(VCF, DATASET, LEGACY, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
 	output:
@@ -343,7 +344,7 @@ rule check_snps_all_legacy:
 			j=`echo $i | perl -p -e 's/{params.dir}\/NC_000962_(.+).ann.vcf.gz/$1/'`; \
 			echo "Sample: $j [File: $i]"; \
 			echo $'\n'; \
-			tabix -R scripts/snps.Chromosome-all.bed $i; \
+			tabix -R {params.bedfile} $i; \
 			echo $'\n==============================\n'; \
 		done > {output}
 		"""
@@ -355,6 +356,7 @@ rule check_snps_bdq_legacy:
 		memory = config['default']['memory']
 	params:
 		dir	= DATA + '\/' + DATASET + '\/' + LEGACY,
+		bedfile = join(config['kasel-data'], 'snps.Chromosome-BDQ.bed'),
 	input:
 		expand(join(VCF, DATASET, LEGACY, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
 	output:
@@ -372,7 +374,7 @@ rule check_snps_bdq_legacy:
 			j=`echo $i | perl -p -e 's/{params.dir}\/NC_000962_(.+).ann.vcf.gz/$1/'`; \
 			echo "Sample: $j [File: $i]"; \
 			echo $'\n'; \
-			tabix -R scripts/snps.Chromosome-BDQ.bed $i; \
+			tabix -R {params.bedfile} $i; \
 			echo $'\n==============================\n'; \
 		done > {output} 2>> {log}
 		"""
@@ -384,6 +386,7 @@ rule check_snps_ptm_legacy:
 		memory = config['default']['memory']
 	params:
 		dir	= DATA + '\/' + DATASET + '\/' + LEGACY,
+		bedfile = join(config['kasel-data'], 'snps.Chromosome-PTM.bed'),
 	input:
 		expand(join(VCF, DATASET, LEGACY, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
 	output:
@@ -401,7 +404,7 @@ rule check_snps_ptm_legacy:
 			j=`echo $i | perl -p -e 's/{params.dir}\/NC_000962_(.+).ann.vcf.gz/$1/'`; \
 			echo "Sample: $j [File: $i]"; \
 			echo $'\n'; \
-			tabix -R scripts/snps.Chromosome-PTM.bed $i; \
+			tabix -R {params.bedfile} $i; \
 			echo $'\n==============================\n'; \
 		done > {output} 2>> {log}
 		"""

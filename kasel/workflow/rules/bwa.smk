@@ -214,8 +214,8 @@ rule snp_annotation_filter:
 	input:
 		vcf = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
 	output:
-		tmp = temp(join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz')),
-		csi = temp(join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi')),
+		tmp = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz'),
+		csi = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi'),
 	log:
 		join(LOGS, DATASET, 'snp_annotation_filter.{ref}.{sample}.log')
 	message:
