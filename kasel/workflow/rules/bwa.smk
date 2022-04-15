@@ -237,8 +237,7 @@ rule snp_report_resistance:
 		memory = config['default']['memory']
 	params:
 		string = join(ALIGNMENTS, DATASET, '{ref}_'),
-#		bed    = workflow.source_path('../data/snps.Chromosome-{drug}.bed'),
-		bed    = 'kasel/kasel/workflow/data/snps.Chromosome-{drug}.bed',
+		bedfile = join(config['kasel-data'], 'snps.Chromosome-{drug}.bed'),
 	input:
 		tmp = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz'),
 		csi = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi'),
@@ -253,7 +252,7 @@ rule snp_report_resistance:
 	shell:
 		"""
 		echo "Starting snp_report_resistance" > {log}
-		bcftools query -R {params.bed}  -f '[%SAMPLE]\\t%POS\\t[%GT]\\t%REF\\t%ALT{{0}}\\t%TYPE\\t%QUAL\\t%FILTER\\t%INFO/DP\\t[%INFO/DP4]\\t[%INFO/ANN]\\n' -i 'GT="alt"' {input.tmp} | \
+		bcftools query -R {params.bedfile}  -f '[%SAMPLE]\\t%POS\\t[%GT]\\t%REF\\t%ALT{{0}}\\t%TYPE\\t%QUAL\\t%FILTER\\t%INFO/DP\\t[%INFO/DP4]\\t[%INFO/ANN]\\n' -i 'GT="alt"' {input.tmp} | \
 			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 2>> {log};
 		echo "Finished snp_report_resistance" >> {log}
 		"""
@@ -361,7 +360,7 @@ rule check_snps_all:
 		memory = config['default']['memory']
 	params:
 		dir	= DATA + '\/' + DATASET,
-		bedfile = workflow.source_path('../data/snps.Chromosome-all.bed'),
+		bedfile = join(config['kasel-data'], 'snps.Chromosome-all.bed'),
 	input:
 		expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
 	output:
@@ -391,8 +390,7 @@ rule check_snps_bdq:
 		memory = config['default']['memory']
 	params:
 		dir	= DATA + '\/' + DATASET,
-		bedfile = workflow.source_path('../data/snps.Chromosome-BDQ.bed')
-#		bedfile    = 'kasel/kasel/workflow/data/snps.Chromosome-BDQ.bed',
+		bedfile = join(config['kasel-data'], 'snps.Chromosome-BDQ.bed'),
 	input:
 		samples = expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES),
 	output:
@@ -424,8 +422,7 @@ rule check_snps_ptm:
 		memory = config['default']['memory']
 	params:
 		dir	= DATA + '\/' + DATASET,
-		bedfile = workflow.source_path('../data/snps.Chromosome-PTM.bed')
-#		bedfile = 'kasel/kasel/workflow/data/snps.Chromosome-PTM.bed',
+		bedfile = join(config['kasel-data'], 'snps.Chromosome-PTM.bed'),
 	input:
 		expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
 	output:
