@@ -27,7 +27,7 @@ TMP        = join(OUTPUT, 'tmp')
 
 # set a directory prefix for legacy version samtools
 #DATASET_LEGACY = DATASET + '-' + LEGACY
-LEGACY     = '0.1.20'
+LEGACY     = 'legacy'
 
 # Create temp directory
 pathlib.Path(TMP).mkdir(parents=True, exist_ok=True) 
@@ -115,7 +115,7 @@ rule all:
 #		join(VERSIONS, DATASET, 'alignment.txt'),
 
 include: join('rules', "bwa.smk")
-include: join('rules', "bwa-0.1.20.smk")
+include: join('rules', "bwa-legacy.smk")
 include: join('rules', "tb-profiler.smk")
 include: join('rules', "mtbseq.smk")
 include: join('rules', "mykrobe.smk")

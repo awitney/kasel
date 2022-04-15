@@ -17,7 +17,7 @@ rule alignment_pe_legacy:
 	message:
 		"Running alignment_pe_legacy for {wildcards.sample} mapping to {wildcards.ref}"
 	conda:
-		"../envs/alignment-0.1.20.yml"
+		"../envs/alignment-legacy.yml"
 	shell:
 		"""
 		( bwa mem -t {threads} {input.genome} {input.r1} {input.r2} | samtools view -bS - | samtools sort -o - {params.tmp} - | samtools rmdup - - > {output.bam} ) 2> {log}
@@ -39,7 +39,7 @@ rule site_calling_legacy:
 	message:
 		"Running site_calling_legacy for {wildcards.sample} mapped to {wildcards.ref}"
 	conda:
-		"../envs/alignment-0.1.20.yml"
+		"../envs/alignment-legacy.yml"
 	shell:
 		"""
 		( samtools mpileup -gf {input.genome} {input.bam} | bcftools view -cg - | bgzip > {output.vcf} && tabix -p vcf {output.vcf} ) &> {log}
@@ -63,7 +63,7 @@ rule variant_calling_legacy:
 	message:
 		"Running variant_calling_legacy for {wildcards.sample} mapped to {wildcards.ref}"
 	conda:
-		"../envs/alignment-0.1.20.yml"
+		"../envs/alignment-legacy.yml"
 	shell:
 		"""
 		( samtools mpileup -ugf {input.genome} {input.bam} | bcftools view -bvcg - > {params.bcf} && bcftools view {params.bcf} | vcfutils.pl varFilter -D 20000 | sed 's/NC_000962.3/Chromosome/g' | bgzip > {output.vcf} && tabix -p vcf {output.vcf} ) &> {log}
@@ -84,7 +84,7 @@ rule snp_annotation_legacy:
 	message:
 		"Running snp_annotation_legacy for {wildcards.sample} mapped to {wildcards.ref}"
 	conda:
-		"../envs/alignment-0.1.20.yml"
+		"../envs/alignment-legacy.yml"
 	shell:
 		"""
         ( snpEff eff -no-downstream -no-upstream -no-utr -o vcf Mycobacterium_tuberculosis_h37rv {input} | bgzip > {output} && bcftools index {output} ) &> {log}
@@ -102,7 +102,7 @@ rule snp_report_all_legacy:
 	message:
 		"Running snp_report_all_legacy for {wildcards.ref}"
 	conda:
-		"../envs/alignment.yml"
+		"../envs/alignment-legacy.yml"
 	shell:
 		"""
 		echo "Sample\tPos\tGT\tREF\tALT\tType\tQUAL\tFilter\tDP\tDP4\tANN\t" > {output.tsv}
@@ -241,7 +241,7 @@ rule stats_coverage_legacy:
 	message:
 		"Running stats_coverage_legacy"
 	conda:
-		"../envs/alignment-0.1.20.yml"
+		"../envs/alignment-legacy.yml"
 	shell:
 		"""
 		for i in {input}; do echo -e $i","$(samtools depth -a $i | awk '{{sum+=$3}} END {{print sum/NR}}') | perl -pe 's/.+\/{params.ref}_(.+).bam/$1/'; done > {output}
@@ -261,7 +261,7 @@ rule stats_read_count_legacy:
 	message:
 		"Running stats_read_count_legacy"
 	conda:
-		"../envs/alignment-0.1.20.yml"
+		"../envs/alignment-legacy.yml"
 	shell:
 		"""
 		for i in {input}; do echo -e $i","$(($(zcat $i | wc -l) / 4)) | perl -pe 's/{params.dir}\/(.+)_1.fastq.gz/$1/'; done > {output}
@@ -308,7 +308,7 @@ rule lineages_legacy:
 	message:
 		"Running lineages_legacy"
 	conda:
-		"alignment-bwa.yml"
+		"../envs/alignment-legacy.yml"
 	shell:
 		"""
 		for i in {input}; do perl scripts/check_lineages.pl scripts/lineages.txt $i; done > {output}
@@ -329,7 +329,7 @@ rule check_snps_all_legacy:
 	message:
 		"Running check_snps_all_legacy"
 	conda:
-		"alignment-bwa.yml"
+		"../envs/alignment-legacy.yml"
 	shell:
 		"""
 		for i in {input}; \
@@ -359,7 +359,7 @@ rule check_snps_bdq_legacy:
 	message:
 		"Running check_snps_bdq_legacy"
 	conda:
-		"alignment-bwa.yml"
+		"../envs/alignment-legacy.yml"
 	shell:
 		"""
 		for i in {input}; \
@@ -389,7 +389,7 @@ rule check_snps_ptm_legacy:
 	message:
 		"Running check_snps_ptm"
 	conda:
-		"alignment-bwa.yml"
+		"../envs/alignment-legacy.yml"
 	shell:
 		"""
 		for i in {input}; \
@@ -412,7 +412,7 @@ rule AMRPredict_legacy:
 	output:
 		join(RESULTS, DATASET, 'AMRPredict.txt'),
 	conda:
-		"alignment-bwa.yml"
+		"../envs/alignment-legacy.yml"
 	shell:
 		"""
 		for i in {input}; \
