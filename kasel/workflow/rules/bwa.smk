@@ -361,10 +361,13 @@ rule check_snps_all:
 		memory = config['default']['memory']
 	params:
 		dir	= DATA + '\/' + DATASET,
+		bedfile = workflow.source_path('../data/snps.Chromosome-all.bed'),
 	input:
 		expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
 	output:
 		join(RESULTS, DATASET, 'gene-snps-all.tsv'),
+	log:
+		join(LOGS, DATASET, 'check_snps_all.log')
 	message:
 		"Running check_snps_all"
 	conda:
@@ -376,9 +379,9 @@ rule check_snps_all:
 			j=`echo $i | perl -p -e 's/{params.dir}\/NC_000962_(.+).ann.vcf.gz/$1/'`; \
 			echo "Sample: $j [File: $i]"; \
 			echo $'\n'; \
-			tabix -R scripts/snps.Chromosome-all.bed $i; \
+			tabix -R {params.bedfile} $i; \
 			echo $'\n==============================\n'; \
-		done > {output}
+		done > {output} 2> {log}
 		"""
 
 rule check_snps_bdq:
@@ -388,8 +391,8 @@ rule check_snps_bdq:
 		memory = config['default']['memory']
 	params:
 		dir	= DATA + '\/' + DATASET,
-#		bedfile = workflow.source_path('../data/snps.Chromosome-BDQ.bed')
-		bedfile    = 'kasel/kasel/workflow/data/snps.Chromosome-BDQ.bed',
+		bedfile = workflow.source_path('../data/snps.Chromosome-BDQ.bed')
+#		bedfile    = 'kasel/kasel/workflow/data/snps.Chromosome-BDQ.bed',
 	input:
 		samples = expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES),
 	output:
@@ -421,8 +424,8 @@ rule check_snps_ptm:
 		memory = config['default']['memory']
 	params:
 		dir	= DATA + '\/' + DATASET,
-#		bedfile = workflow.source_path('../data/snps.Chromosome-PTM.bed')
-		bedfile = 'kasel/kasel/workflow/data/snps.Chromosome-PTM.bed',
+		bedfile = workflow.source_path('../data/snps.Chromosome-PTM.bed')
+#		bedfile = 'kasel/kasel/workflow/data/snps.Chromosome-PTM.bed',
 	input:
 		expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
 	output:
