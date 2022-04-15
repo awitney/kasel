@@ -269,13 +269,17 @@ rule stats_coverage:
 		expand(join(ALIGNMENTS, DATASET, REF + '_' + '{sample}.bam'), sample=SAMPLES)
 	output:
 		join(RESULTS, DATASET, 'stats.coverage.' + REF + '.txt'),
+	log:
+		join(LOGS, DATASET, 'stats_coverage.log')
 	message:
 		"Running stats_coverage"
 	conda:
 		"../envs/alignment.yml"
 	shell:
 		"""
-		for i in {input}; do echo -e $i","$(samtools depth -a $i | awk '{{sum+=$3}} END {{print sum/NR}}') | perl -pe 's/.+\/{params.ref}_(.+).bam/$1/'; done > {output}
+		echo "Starting stats_coverage" > {log}
+		for i in {input}; do echo -e $i","$(samtools depth -a $i | awk '{{sum+=$3}} END {{print sum/NR}}') | perl -pe 's/.+\/{params.ref}_(.+).bam/$1/'; done > {output} 2>> {log}
+		echo "Finishing stats_coverage" >> {log}
 		"""
 
 rule stats_read_count:
@@ -290,13 +294,17 @@ rule stats_read_count:
 		sampledata['forward'],
 	output:
 		join(RESULTS, DATASET, 'stats.read-count.txt'),
+	log:
+		join(LOGS, DATASET, 'stats_read_count.log')
 	message:
 		"Running stats_read_count"
 	conda:
 		"../envs/alignment.yml"
 	shell:
 		"""
-		for i in {input}; do echo -e $i","$(($(zcat $i | wc -l) / 4)) | perl -pe 's/{params.dir}\/(.+)_1.fastq.gz/$1/'; done > {output}
+		echo "Starting stats_read_count" > {log}
+		for i in {input}; do echo -e $i","$(($(zcat $i | wc -l) / 4)) | perl -pe 's/{params.dir}\/(.+)_1.fastq.gz/$1/'; done > {output} 2>> {log}
+		echo "Finishing stats_read_count" >> {log}
 		"""
 
 rule stats_combined:
