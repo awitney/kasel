@@ -9,5 +9,6 @@ dependencies:
     - snakemake-minimal
     - loguru
     - graphviz
+    - pytest
     - pip:
         - pandas
