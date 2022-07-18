@@ -83,6 +83,8 @@ def init_pipeline_parser():
 	parser_sample.add_argument(
 		'--nolegacy', required=False, action="store_true", dest='nolegacy', help='Switch off legacy pipeline')
 	parser_sample.add_argument(
+		'--nocallers', required=False, action="store_true", dest='nocallers', help='Switch off external callers')
+	parser_sample.add_argument(
 		'--list-params-changes', required=False, action="store_true", dest='list_params_changes', help='List params changes')
 
 	parser_sample.set_defaults(func=run_subtool)

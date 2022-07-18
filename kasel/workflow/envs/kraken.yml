@@ -1,0 +1,10 @@
+name: kraken2
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - kraken2
+  - krakentools
+prefix: /homedirs8/awitney/miniconda3/envs/kraken2
+

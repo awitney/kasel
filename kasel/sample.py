@@ -20,6 +20,7 @@ def run(parser, args):
 	cluster = args.cluster
 	until = args.until
 	nolegacy = args.nolegacy
+	nocallers = args.nocallers
 	verbose = args.verbose
 	list_params_changes = args.list_params_changes
 	summary = args.summary
@@ -32,7 +33,8 @@ def run(parser, args):
 		"samples_file": samples_file,
 		"output": 'pipeline',
 		"cluster": False,
-		"nolegacy": nolegacy
+		"nolegacy": nolegacy,
+		"nocallers": nocallers
 	}
 	
 	# Read config file

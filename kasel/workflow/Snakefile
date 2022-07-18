@@ -21,9 +21,12 @@ ALIGNMENTS = join(OUTPUT, 'alignments')
 VCF        = join(OUTPUT, 'vcf')
 RESULTS    = join(OUTPUT, 'results')
 CALLERS    = join(OUTPUT, 'callers')
+KRAKEN     = join(OUTPUT, 'kraken')
 LOGS       = join(OUTPUT, 'logs')
 VERSIONS   = join(OUTPUT, 'versions')
 TMP        = join(OUTPUT, 'tmp')
+
+KRAKENDB = '/homedirsbugs2/sghms/shares/bunit/krakendb/kraken2_20210922/'
 
 # set a directory prefix for legacy version samtools
 #DATASET_LEGACY = DATASET + '-' + LEGACY
@@ -74,6 +77,17 @@ def fetch_legacy_files(nolegacy):
 	
 	return files
 
+def fetch_caller_files(nocallers):
+
+	files = []
+	
+	if nocallers == False:
+		files.append(expand(join(CALLERS, DATASET, 'TB-profiler', '{sample}', 'results', '{sample}.results.txt'), sample=SAMPLES))
+		files.append(join(CALLERS, DATASET, 'TB-profiler', 'tbprofiler.txt'))
+		files.append(expand(join(CALLERS, DATASET, 'mykrobe', '{sample}.results.csv'), sample=SAMPLES))
+	
+	return files
+
 rule all:
 	input:
 #		join(RESULTS, DATASET, 'stats.coverage.' + REF + '.txt'),
@@ -94,9 +108,7 @@ rule all:
 		#
 		# External callers
 		#
-		expand(join(CALLERS, DATASET, 'TB-profiler', '{sample}', 'results', '{sample}.results.txt'), sample=SAMPLES),
-		join(CALLERS, DATASET, 'TB-profiler', 'tbprofiler.txt'),
-		expand(join(CALLERS, DATASET, 'mykrobe', '{sample}.results.csv'), sample=SAMPLES),
+		fetch_caller_files(config['nocallers']),
 		#
 #		join(CALLERS, DATASET, 'MTBSeq', 'Classification', 'Strain_Classification.tab'),
 		#	
@@ -110,6 +122,9 @@ rule all:
 		join(RESULTS, DATASET, 'gene-snps-PTM.txt'),
 		join(RESULTS, DATASET, 'gene-snps-BDQ.txt'),
 		#
+		# Kraken
+		expand(join(KRAKEN, DATASET, '{sample}.report.txt'), sample=SAMPLES),
+		#
 		# Versions
 		#
 #		join(VERSIONS, DATASET, 'alignment.txt'),
@@ -119,3 +134,4 @@ include: join('rules', "bwa-legacy.smk")
 include: join('rules', "tb-profiler.smk")
 include: join('rules', "mtbseq.smk")
 include: join('rules', "mykrobe.smk")
+include: join('rules', "kraken.smk")
