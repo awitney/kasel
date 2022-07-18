@@ -26,7 +26,7 @@ LOGS       = join(OUTPUT, 'logs')
 VERSIONS   = join(OUTPUT, 'versions')
 TMP        = join(OUTPUT, 'tmp')
 
-KRAKENDB = '/homedirsbugs2/sghms/shares/bunit/krakendb/kraken2_20210922/'
+KRAKENDB = config['krakendb']
 
 # set a directory prefix for legacy version samtools
 #DATASET_LEGACY = DATASET + '-' + LEGACY

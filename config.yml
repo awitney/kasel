@@ -5,6 +5,9 @@ output:
 kasel-data:
     'kasel/data'
 
+krakendb:
+    'krakendb/kraken2_20210922/'
+
 default:
     threads: 1
     memory: "4G"
