@@ -2,6 +2,8 @@
 rule run_kraken:
 	threads:
 		5
+	resources:
+		memory = config['run_kraken']['memory']
 	params:
 		krakendb = KRAKENDB
 	input:

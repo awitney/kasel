@@ -44,3 +44,6 @@ stats_coverage:
     memory: "2G"
     h_rt: "00:20:0"
 
+run_kraken:
+    threads: 20
+    memory: "16G"
