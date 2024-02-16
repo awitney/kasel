@@ -16,15 +16,16 @@ GENOMES    = 'genomes'
 DATA       = 'data'
 
 OUTPUT     = config['output']
+DATASET    = config['dataset']
 
-ALIGNMENTS = join(OUTPUT, 'alignments')
-VCF        = join(OUTPUT, 'vcf')
-RESULTS    = join(OUTPUT, 'results')
-CALLERS    = join(OUTPUT, 'callers')
-KRAKEN     = join(OUTPUT, 'kraken')
-LOGS       = join(OUTPUT, 'logs')
-VERSIONS   = join(OUTPUT, 'versions')
-TMP        = join(OUTPUT, 'tmp')
+ALIGNMENTS = join(OUTPUT, DATASET, 'alignments')
+VCF        = join(OUTPUT, DATASET, 'vcf')
+RESULTS    = join(OUTPUT, DATASET, 'results')
+CALLERS    = join(OUTPUT, DATASET, 'callers')
+KRAKEN     = join(OUTPUT, DATASET, 'kraken')
+LOGS       = join(OUTPUT, DATASET, 'logs')
+VERSIONS   = join(OUTPUT, DATASET, 'versions')
+TMP        = join(OUTPUT, DATASET, 'tmp')
 
 KRAKENDB = config['krakendb']
 
@@ -40,9 +41,7 @@ REF = 'NC_000962'
 
 DRUGS = ['PTM', 'BDQ']
 
-DATASET = config['dataset']
 samples_file = config['samples_file']
-
 
 sampledata = pd.read_table(samples_file).set_index("sample", drop=False)
 SAMPLES = sampledata['sample'].tolist()
@@ -57,23 +56,23 @@ wildcard_constraints:
 # function to load read files within rules
 def get_seq(wildcards, reads):
 #	print(wildcards)
-	return sampledata.loc[(wildcards.sample), [reads]].dropna()[0]
+	return sampledata.loc[(wildcards.sample), [reads]].dropna().iloc[0]
 
 def fetch_legacy_files(nolegacy):
 
 	files = []
 	
 	if nolegacy == False:
-		files.append(expand(join(ALIGNMENTS, DATASET, LEGACY, '{ref}_{sample}.bam'), ref=REF, sample=SAMPLES))
-		files.append(expand(join(VCF, DATASET, LEGACY, '{ref}_{sample}.all.vcf.gz'), ref=REF, sample=SAMPLES))
-		files.append(expand(join(VCF, DATASET, LEGACY, 'variants', '{ref}_{sample}.vcf.gz'), ref=REF, sample=SAMPLES))
-		files.append(expand(join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'), ref=REF, sample=SAMPLES))
-		files.append(expand(join(VCF, DATASET, LEGACY, 'variants', 'annotated', '{ref}_{sample}.tsv'), ref=REF, sample=SAMPLES))
-		files.append(expand(join(RESULTS, DATASET, LEGACY, 'variants', '{ref}_' + DATASET + '.tsv'), ref=REF))
+		files.append(expand(join(ALIGNMENTS, LEGACY, '{ref}_{sample}.bam'), ref=REF, sample=SAMPLES))
+		files.append(expand(join(VCF, LEGACY, '{ref}_{sample}.all.vcf.gz'), ref=REF, sample=SAMPLES))
+		files.append(expand(join(VCF, LEGACY, 'variants', '{ref}_{sample}.vcf.gz'), ref=REF, sample=SAMPLES))
+		files.append(expand(join(VCF, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'), ref=REF, sample=SAMPLES))
+		files.append(expand(join(VCF, LEGACY, 'variants', 'annotated', '{ref}_{sample}.tsv'), ref=REF, sample=SAMPLES))
+		files.append(expand(join(RESULTS, LEGACY, 'variants', '{ref}_' + DATASET + '.tsv'), ref=REF))
 		
-		files.append(expand(join(VCF, DATASET, LEGACY, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'), ref=REF, sample=SAMPLES, drug=DRUGS))
-		files.append(expand(join(RESULTS, DATASET, LEGACY, 'variants', 'resistance', '{ref}_' + DATASET + '_{drug}.tsv'), ref=REF, drug=DRUGS))
-		files.append(expand(join(RESULTS, DATASET, LEGACY, 'variants', 'resistance', '{ref}_' + DATASET + '.tsv'), ref=REF))
+		files.append(expand(join(VCF, LEGACY, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'), ref=REF, sample=SAMPLES, drug=DRUGS))
+		files.append(expand(join(RESULTS, LEGACY, 'variants', 'resistance', '{ref}_' + DATASET + '_{drug}.tsv'), ref=REF, drug=DRUGS))
+		files.append(expand(join(RESULTS, LEGACY, 'variants', 'resistance', '{ref}_' + DATASET + '.tsv'), ref=REF))
 	
 	return files
 
@@ -82,35 +81,35 @@ def fetch_caller_files(nocallers):
 	files = []
 	
 	if nocallers == False:
-		files.append(expand(join(CALLERS, DATASET, 'TB-profiler', '{sample}', 'results', '{sample}.results.txt'), sample=SAMPLES))
-		files.append(join(CALLERS, DATASET, 'TB-profiler', 'tbprofiler.txt'))
-		files.append(expand(join(CALLERS, DATASET, 'mykrobe', '{sample}.results.csv'), sample=SAMPLES))
+		files.append(expand(join(CALLERS, 'TB-profiler', '{sample}', 'results', '{sample}.results.txt'), sample=SAMPLES))
+		files.append(join(CALLERS, 'TB-profiler', 'tbprofiler.txt'))
+		files.append(expand(join(CALLERS, 'mykrobe', '{sample}.results.csv'), sample=SAMPLES))
 	
 	return files
 
 rule all:
 	input:
-#		join(RESULTS, DATASET, 'stats.coverage.' + REF + '.txt'),
-		join(RESULTS, DATASET, 'stats.txt'),
+#		join(RESULTS, 'stats.coverage.' + REF + '.txt'),
+		join(RESULTS, 'stats.txt'),
 		#
-		expand(join(ALIGNMENTS, DATASET, '{ref}_{sample}.bam'), ref=REF, sample=SAMPLES),
-		expand(join(VCF, DATASET, '{ref}_{sample}.all.vcf.gz'), ref=REF, sample=SAMPLES),
-		expand(join(VCF, DATASET, 'variants', '{ref}_{sample}.vcf.gz'), ref=REF, sample=SAMPLES),
-		expand(join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'), ref=REF, sample=SAMPLES),
-		expand(join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.tsv'), ref=REF, sample=SAMPLES),
-		expand(join(RESULTS, DATASET, 'variants', '{ref}_' + DATASET + '.tsv'), ref=REF),
+		expand(join(ALIGNMENTS, '{ref}_{sample}.bam'), ref=REF, sample=SAMPLES),
+		expand(join(VCF, '{ref}_{sample}.all.vcf.gz'), ref=REF, sample=SAMPLES),
+		expand(join(VCF, 'variants', '{ref}_{sample}.vcf.gz'), ref=REF, sample=SAMPLES),
+		expand(join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'), ref=REF, sample=SAMPLES),
+		expand(join(VCF, 'variants', 'annotated', '{ref}_{sample}.tsv'), ref=REF, sample=SAMPLES),
+		expand(join(RESULTS, 'variants', '{ref}_' + DATASET + '.tsv'), ref=REF),
 		#
 		# Drug specific SNPs
 		#
-		expand(join(VCF, DATASET, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'), ref=REF, sample=SAMPLES, drug=DRUGS),
-		expand(join(RESULTS, DATASET, 'variants', 'resistance', '{ref}_' + DATASET + '_{drug}.tsv'), ref=REF, drug=DRUGS),
-		expand(join(RESULTS, DATASET, 'variants', 'resistance', '{ref}_' + DATASET + '.tsv'), ref=REF),
+		expand(join(VCF, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'), ref=REF, sample=SAMPLES, drug=DRUGS),
+		expand(join(RESULTS, 'variants', 'resistance', '{ref}_' + DATASET + '_{drug}.tsv'), ref=REF, drug=DRUGS),
+		expand(join(RESULTS, 'variants', 'resistance', '{ref}_' + DATASET + '.tsv'), ref=REF),
 		#
 		# External callers
 		#
 		fetch_caller_files(config['nocallers']),
 		#
-#		join(CALLERS, DATASET, 'MTBSeq', 'Classification', 'Strain_Classification.tab'),
+#		join(CALLERS, 'MTBSeq', 'Classification', 'Strain_Classification.tab'),
 		#	
 		# for legacy version samtools/bcftools
 		#
@@ -118,16 +117,16 @@ rule all:
 		#
 		# Drug specific SNPs
 		#
-		join(RESULTS, DATASET, 'gene-snps-all.tsv'),
-		join(RESULTS, DATASET, 'gene-snps-PTM.txt'),
-		join(RESULTS, DATASET, 'gene-snps-BDQ.txt'),
+		join(RESULTS, 'gene-snps-all.tsv'),
+		join(RESULTS, 'gene-snps-PTM.txt'),
+		join(RESULTS, 'gene-snps-BDQ.txt'),
 		#
 		# Kraken
-		expand(join(KRAKEN, DATASET, '{sample}.report.txt'), sample=SAMPLES),
+		expand(join(KRAKEN, '{sample}.report.txt'), sample=SAMPLES),
 		#
 		# Versions
 		#
-#		join(VERSIONS, DATASET, 'alignment.txt'),
+#		join(VERSIONS, 'alignment.txt'),
 
 include: join('rules', "bwa.smk")
 include: join('rules', "bwa-legacy.smk")

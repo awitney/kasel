@@ -2,9 +2,9 @@ rule versions:
 	threads:
 		1
 	output:
-		join(VERSIONS, DATASET, 'alignment.txt')
+		join(VERSIONS, 'alignment.txt')
 	log:
-		join(LOGS, DATASET, 'versions.log')
+		join(LOGS, 'versions.log')
 	message:
 		"Running alignment versions"
 	conda:
@@ -27,9 +27,9 @@ rule alignment_pe:
 		r1 = lambda wildcards: get_seq(wildcards, 'forward'),
 		r2 = lambda wildcards: get_seq(wildcards, 'reverse'),
 	output:
-		bam = join(ALIGNMENTS, DATASET, '{ref}_{sample}.bam'),
+		bam = join(ALIGNMENTS, '{ref}_{sample}.bam'),
 	log:
-		join(LOGS, DATASET, 'alignment_pe.{ref}.{sample}.log')
+		join(LOGS, 'alignment_pe.{ref}.{sample}.log')
 	message:
 		"Running alignment_pe for {wildcards.sample} mapping to {wildcards.ref}"
 	conda:
@@ -47,11 +47,11 @@ rule site_calling:
 		memory = config['site_calling']['memory']
 	input:
 		genome = join(GENOMES, '{ref}.fna'),
-		bam = join(ALIGNMENTS, DATASET, '{ref}_{sample}.bam'),
+		bam = join(ALIGNMENTS, '{ref}_{sample}.bam'),
 	output:
-		vcf = join(VCF, DATASET, '{ref}_{sample}.all.vcf.gz')
+		vcf = join(VCF, '{ref}_{sample}.all.vcf.gz')
 	log:
-		join(LOGS, DATASET, 'site_calling.{ref}.{sample}.log')
+		join(LOGS, 'site_calling.{ref}.{sample}.log')
 	message:
 		"Running site_calling for {wildcards.sample} mapped to {wildcards.ref}"
 	conda:
@@ -75,11 +75,11 @@ rule variant_calling:
 		ref = '{ref}.3'
 	input:
 		genome = join(GENOMES, '{ref}.fna'),
-		bam = join(ALIGNMENTS, DATASET, '{ref}_{sample}.bam'),
+		bam = join(ALIGNMENTS, '{ref}_{sample}.bam'),
 	output:
-		vcf = join(VCF, DATASET, 'variants', '{ref}_{sample}.vcf.gz')
+		vcf = join(VCF, 'variants', '{ref}_{sample}.vcf.gz')
 	log:
-		join(LOGS, DATASET, 'variant_calling.{ref}.{sample}.log')
+		join(LOGS, 'variant_calling.{ref}.{sample}.log')
 	message:
 		"Running variant_calling for {wildcards.sample} mapped to {wildcards.ref}"
 	conda:
@@ -100,11 +100,11 @@ rule snp_annotation:
 	resources:
 		memory = config['default']['memory']
 	input:
-		join(VCF, DATASET, 'variants', '{ref}_{sample}.vcf.gz'),
+		join(VCF, 'variants', '{ref}_{sample}.vcf.gz'),
 	output:
-		join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
+		join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
 	log:
-		join(LOGS, DATASET, 'snp_annotation.{ref}.{sample}.log')
+		join(LOGS, 'snp_annotation.{ref}.{sample}.log')
 	message:
 		"Running snp_annotation for {wildcards.sample} mapped to {wildcards.ref}"
 	conda:
@@ -120,9 +120,9 @@ rule snp_report_all:
 	resources:
 		memory = config['default']['memory']
 	input:
-		tsv = expand(join(VCF, DATASET, 'variants/annotated', '{ref}_{sample}.tsv'), ref=REF, sample=SAMPLES),
+		tsv = expand(join(VCF, 'variants/annotated', '{ref}_{sample}.tsv'), ref=REF, sample=SAMPLES),
 	output:
-		tsv = join(RESULTS, DATASET, 'variants', '{ref}_' + DATASET + '.tsv'),
+		tsv = join(RESULTS, 'variants', '{ref}_' + DATASET + '.tsv'),
 	message:
 		"Running snp_report_all for {wildcards.ref}"
 	conda:
@@ -139,13 +139,13 @@ rule snp_report:
 	resources:
 		memory = config['default']['memory']
 	params:
-		string = join(ALIGNMENTS, DATASET, '{ref}_')
+		string = join(ALIGNMENTS, '{ref}_')
 	input:
-		vcf = join(VCF, DATASET, 'variants/annotated', '{ref}_{sample}.ann.vcf.gz'),
+		vcf = join(VCF, 'variants/annotated', '{ref}_{sample}.ann.vcf.gz'),
 	output:
-		tsv = join(VCF, DATASET, 'variants/annotated', '{ref}_{sample}.tsv'),
+		tsv = join(VCF, 'variants/annotated', '{ref}_{sample}.tsv'),
 	log:
-		join(LOGS, DATASET, 'snp_report.{ref}.{sample}.log')
+		join(LOGS, 'snp_report.{ref}.{sample}.log')
 	message:
 		"Running snp_report for {wildcards.sample} mapped to {wildcards.ref}"
 	conda:
@@ -165,9 +165,9 @@ rule snp_report_resistance_all:
 	resources:
 		memory = config['default']['memory']
 	input:
-		tsv = expand(join(VCF, DATASET, 'variants/annotated/resistance', '{ref}_{{drug}}_{sample}.tsv'), ref=REF, sample=SAMPLES),
+		tsv = expand(join(VCF, 'variants/annotated/resistance', '{ref}_{{drug}}_{sample}.tsv'), ref=REF, sample=SAMPLES),
 	output:
-		tsv = join(RESULTS, DATASET, 'variants/resistance', '{ref}_' + DATASET + '_{drug}.tsv'),
+		tsv = join(RESULTS, 'variants/resistance', '{ref}_' + DATASET + '_{drug}.tsv'),
 	message:
 		"Running snp_report_resistance_all for {wildcards.ref} drug {wildcards.drug}"
 	conda:
@@ -184,13 +184,13 @@ rule snp_report_resistance_all_summary:
 	resources:
 		memory = config['default']['memory']
 	params:
-		finddir = join(VCF, DATASET, 'variants/annotated/resistance/'),
-		string = join(VCF, DATASET, 'variants/annotated/resistance/' + REF + '_'),
+		finddir = join(VCF, 'variants/annotated/resistance/'),
+		string = join(VCF, 'variants/annotated/resistance/' + REF + '_'),
 	input:
-		tsv1 = expand(join(RESULTS, DATASET, 'variants/resistance', '{ref}_' + DATASET + '_BDQ.tsv'), ref=REF),
-		tsv2 = expand(join(RESULTS, DATASET, 'variants/resistance', '{ref}_' + DATASET + '_PTM.tsv'), ref=REF),
+		tsv1 = expand(join(RESULTS, 'variants/resistance', '{ref}_' + DATASET + '_BDQ.tsv'), ref=REF),
+		tsv2 = expand(join(RESULTS, 'variants/resistance', '{ref}_' + DATASET + '_PTM.tsv'), ref=REF),
 	output:
-		out = join(RESULTS, DATASET, 'variants/resistance', '{ref}_' + DATASET + '.tsv'),
+		out = join(RESULTS, 'variants/resistance', '{ref}_' + DATASET + '.tsv'),
 	message:
 		"Running snp_report_resistance_all_summary for {wildcards.ref}"
 	conda:
@@ -207,12 +207,12 @@ rule snp_annotation_filter:
 	resources:
 		memory = config['default']['memory']
 	input:
-		vcf = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
+		vcf = join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
 	output:
-		tmp = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz'),
-		csi = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi'),
+		tmp = join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz'),
+		csi = join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi'),
 	log:
-		join(LOGS, DATASET, 'snp_annotation_filter.{ref}.{sample}.log')
+		join(LOGS, 'snp_annotation_filter.{ref}.{sample}.log')
 	message:
 		"Running snp_annotation_filter for {wildcards.sample} mapped to {wildcards.ref}"
 	conda:
@@ -231,15 +231,15 @@ rule snp_report_resistance:
 	resources:
 		memory = config['default']['memory']
 	params:
-		string = join(ALIGNMENTS, DATASET, '{ref}_'),
+		string = join(ALIGNMENTS, '{ref}_'),
 		bedfile = join(config['kasel-data'], 'snps.Chromosome-{drug}.bed'),
 	input:
-		tmp = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz'),
-		csi = join(VCF, DATASET, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi'),
+		tmp = join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz'),
+		csi = join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi'),
 	output:
-		tsv = join(VCF, DATASET, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'),
+		tsv = join(VCF, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'),
 	log:
-		join(LOGS, DATASET, 'snp_report_resistance.{ref}.{drug}.{sample}.log')
+		join(LOGS, 'snp_report_resistance.{ref}.{drug}.{sample}.log')
 	message:
 		"Running snp_report_resistance for {wildcards.sample} mapped to {wildcards.ref} drug {wildcards.drug}"
 	conda:
@@ -260,11 +260,11 @@ rule stats_coverage:
 	params:
 		ref	= REF
 	input:
-		expand(join(ALIGNMENTS, DATASET, REF + '_' + '{sample}.bam'), sample=SAMPLES)
+		expand(join(ALIGNMENTS, REF + '_' + '{sample}.bam'), sample=SAMPLES)
 	output:
-		join(RESULTS, DATASET, 'stats.coverage.' + REF + '.txt'),
+		join(RESULTS, 'stats.coverage.' + REF + '.txt'),
 	log:
-		join(LOGS, DATASET, 'stats_coverage.log')
+		join(LOGS, 'stats_coverage.log')
 	message:
 		"Running stats_coverage"
 	conda:
@@ -282,13 +282,13 @@ rule stats_read_count:
 	resources:
 		memory = config['default']['memory']
 	params:
-		dir	= DATA + '\/' + DATASET,
+		dir	= DATA,
 	input:
 		sampledata['forward'],
 	output:
-		join(RESULTS, DATASET, 'stats.read-count.txt'),
+		join(RESULTS, 'stats.read-count.txt'),
 	log:
-		join(LOGS, DATASET, 'stats_read_count.log')
+		join(LOGS, 'stats_read_count.log')
 	message:
 		"Running stats_read_count"
 	conda:
@@ -306,12 +306,12 @@ rule stats_combined:
 	resources:
 		memory = config['default']['memory']
 	params:
-		dir	= DATA + '\/' + DATASET,
+		dir	= DATA,
 	input:
 		reads = rules.stats_read_count.output,
 		coverage = rules.stats_coverage.output,
 	output:
-		join(RESULTS, DATASET, 'stats.txt'),
+		join(RESULTS, 'stats.txt'),
 	message:
 		"Running stats_combined"
 	run:
@@ -335,9 +335,9 @@ rule lineages:
 	resources:
 		memory = config['default']['memory']
 	input:
-		expand(join(VCF, DATASET, REF + '_' + '{sample}.all.vcf.gz'), sample=SAMPLES)
+		expand(join(VCF, REF + '_' + '{sample}.all.vcf.gz'), sample=SAMPLES)
 	output:
-		join(RESULTS, DATASET, 'lineages.txt'),
+		join(RESULTS, 'lineages.txt'),
 	message:
 		"Running lineages"
 	conda:
@@ -353,14 +353,14 @@ rule check_snps_all:
 	resources:
 		memory = config['default']['memory']
 	params:
-		dir	= DATA + '\/' + DATASET,
+		dir	= DATA,
 		bedfile = join(config['kasel-data'], 'snps.Chromosome-all.bed'),
 	input:
-		expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
+		expand(join(VCF, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
 	output:
-		join(RESULTS, DATASET, 'gene-snps-all.tsv'),
+		join(RESULTS, 'gene-snps-all.tsv'),
 	log:
-		join(LOGS, DATASET, 'check_snps_all.log')
+		join(LOGS, 'check_snps_all.log')
 	message:
 		"Running check_snps_all"
 	conda:
@@ -383,14 +383,14 @@ rule check_snps_bdq:
 	resources:
 		memory = config['default']['memory']
 	params:
-		dir	= DATA + '\/' + DATASET,
+		dir	= DATA,
 		bedfile = join(config['kasel-data'], 'snps.Chromosome-BDQ.bed'),
 	input:
-		samples = expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES),
+		samples = expand(join(VCF, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES),
 	output:
-		join(RESULTS, DATASET, 'gene-snps-BDQ.txt'),
+		join(RESULTS, 'gene-snps-BDQ.txt'),
 	log:
-		join(LOGS, DATASET, 'check_snps_bdq.log')
+		join(LOGS, 'check_snps_bdq.log')
 	message:
 		"Running check_snps_bdq"
 	conda:
@@ -415,14 +415,14 @@ rule check_snps_ptm:
 	resources:
 		memory = config['default']['memory']
 	params:
-		dir	= DATA + '\/' + DATASET,
+		dir	= DATA,
 		bedfile = join(config['kasel-data'], 'snps.Chromosome-PTM.bed'),
 	input:
-		expand(join(VCF, DATASET, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
+		expand(join(VCF, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
 	output:
-		join(RESULTS, DATASET, 'gene-snps-PTM.txt'),
+		join(RESULTS, 'gene-snps-PTM.txt'),
 	log:
-		join(LOGS, DATASET, 'check_snps_ptm.log')
+		join(LOGS, 'check_snps_ptm.log')
 	message:
 		"Running check_snps_ptm"
 	conda:
@@ -445,11 +445,11 @@ rule AMRPredict:
 	threads:
 		1
 	params:
-		dir	= DATA + '\/' + DATASET,
+		dir	= DATA,
 	input:
-		expand(join(VCF, DATASET, REF + '_' + '{sample}.all.vcf.gz'), sample=SAMPLES)
+		expand(join(VCF, REF + '_' + '{sample}.all.vcf.gz'), sample=SAMPLES)
 	output:
-		join(RESULTS, DATASET, 'AMRPredict.txt'),
+		join(RESULTS, 'AMRPredict.txt'),
 	conda:
 		"alignment-bwa.yml"
 	shell:

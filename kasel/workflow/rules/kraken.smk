@@ -10,10 +10,10 @@ rule run_kraken:
 		r1 = lambda wildcards: get_seq(wildcards, 'forward'),
 		r2 = lambda wildcards: get_seq(wildcards, 'reverse'),
 	output:
-		report = join(KRAKEN, DATASET, '{sample}.report.txt'),
-#		output = join(KRAKEN, DATASET, '{sample}.output.txt')
+		report = join(KRAKEN, '{sample}.report.txt'),
+#		output = join(KRAKEN, '{sample}.output.txt')
 	log:
-		join(LOGS, DATASET, 'kraken.{sample}.log')
+		join(LOGS, 'kraken.{sample}.log')
 	conda:
 		"../envs/kraken.yml"
 	shell:
@@ -33,13 +33,13 @@ rule run_kraken_extract:
 	input:
 		r1 = lambda wildcards: get_seq(wildcards, 'forward'),
 		r2 = lambda wildcards: get_seq(wildcards, 'reverse'),
-		report = join(KRAKEN, DATASET, '{sample}.report.txt'),
-		output = join(KRAKEN, DATASET, '{sample}.output.txt'),
+		report = join(KRAKEN, '{sample}.report.txt'),
+		output = join(KRAKEN, '{sample}.output.txt'),
 	output:
 		r1 = join(DATA, DATASET + '-{taxid}', '{sample}_1.fastq.gz'),
 		r2 = join(DATA, DATASET + '-{taxid}', '{sample}_2.fastq.gz'),
 	log:
-		join(LOGS, DATASET, 'kraken-extract-{taxid}.{sample}.log')
+		join(LOGS, 'kraken-extract-{taxid}.{sample}.log')
 	conda:
 		"../envs/kraken.yml"
 	shell:

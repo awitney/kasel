@@ -5,16 +5,16 @@ rule mtbseq:
 	resources:
 		memory = config['mtbseq']['memory']
 	params:
-		data   = join(DATA, DATASET),
-		outdir = join(CALLERS, DATASET, 'MTBSeq'),
+		data   = DATA,
+		outdir = join(CALLERS, 'MTBSeq'),
 	input:
 		reads = READS1
 	output:
-		join(CALLERS, DATASET, 'MTBSeq', 'Classification/Strain_Classification.tab'),
+		join(CALLERS, 'MTBSeq', 'Classification/Strain_Classification.tab'),
 	conda:
 		"../envs/mtbseq.yml"
 	log:
-		"logs/mtbseq." + DATASET + ".log"
+		join(LOGS, "mtbseq.log")
 	shell:
 		"""
 		cd {params.outdir}
@@ -30,11 +30,11 @@ rule mtbseq_samples:
 	resources:
 		memory = config['default']['memory']
 	params:
-		data   = join(DATA, DATASET),
-		outdir = join(CALLERS, DATASET, 'MTBSeq'),
+		data   = DATA,
+		outdir = join(CALLERS, 'MTBSeq'),
 	input:
 	output:
-		join(CALLERS, DATASET, 'MTBSeq', 'samples.txt'),
+		join(CALLERS, 'MTBSeq', 'samples.txt'),
 	run:
 		"""
 		print("We are printing samples.txt here", SAMPLES)
