@@ -4,6 +4,6 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - tb-profiler=2.8.12
+  - tb-profiler=5.0.1
 prefix: /homedirs8/awitney/miniconda3/envs/TB-profiler
 
