@@ -28,6 +28,7 @@ rule alignment_pe:
 		r2 = lambda wildcards: get_seq(wildcards, 'reverse'),
 	output:
 		bam = join(ALIGNMENTS, '{ref}_{sample}.bam'),
+		versions = join(ALIGNMENTS, '{ref}_{sample}.versions.txt'),
 	log:
 		join(LOGS, 'alignment_pe.{ref}.{sample}.log')
 	message:
@@ -37,9 +38,12 @@ rule alignment_pe:
 	shell:
 		"""
 		( bwa mem -t {threads} {input.genome} {input.r1} {input.r2} | samtools view -bS - | samtools sort -T {params.tmp} - | samtools rmdup - - > {output.bam} ) 2> {log}
-		samtools index {output.bam}
+		( echo "bwa " $(( bwa 2>&1 ) | grep Version ) > {output.versions} ) || exit 0
+		samtools --version | grep "samtools " &>> {output.versions}
 		"""
 
+#		samtools index {output.bam}
+#		bwa &> {output.versions}
 rule site_calling:
 	threads:
 		config['site_calling']['threads']
