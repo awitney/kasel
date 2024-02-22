@@ -296,7 +296,7 @@ rule stats_read_count:
 	shell:
 		"""
 		echo "Starting stats_read_count" > {log}
-		for i in {input}; do echo -e $i","$(($(zcat $i | wc -l) / 4)) | perl -pe 's/{params.dir}\/(.+)_1.fastq.gz/$1/'; done > {output} 2>> {log}
+		for i in {input}; do echo -e $i","$(($(zcat $i | wc -l) / 4)) | perl -pe 's/.+\/{params.dir}\/(.+)_1.fastq.gz/$1/'; done > {output} 2>> {log}
 		echo "Finishing stats_read_count" >> {log}
 		"""
 
