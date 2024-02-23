@@ -53,7 +53,8 @@ rule site_calling:
 		genome = join(GENOMES, '{ref}.fna'),
 		bam = join(ALIGNMENTS, '{ref}_{sample}.bam'),
 	output:
-		vcf = join(VCF, '{ref}_{sample}.all.vcf.gz')
+		vcf = join(VCF, '{ref}_{sample}.all.vcf.gz'),
+		versions = join(VCF, '{ref}_{sample}.all.vcf.versions.txt'),
 	log:
 		join(LOGS, 'site_calling.{ref}.{sample}.log')
 	message:
@@ -68,6 +69,7 @@ rule site_calling:
 			bcftools filter -sDepth -e 'FORMAT/DP<10' - | \
 			bcftools filter -sLowQual -g3 -G10 -e '%QUAL<30 || RPB<0.1' - | \
 			bgzip > {output.vcf} && tabix -p vcf {output.vcf} ) 2> {log}
+		bcftools --version | grep "bcftools " &>> {output.versions}
 		"""
 
 rule variant_calling:
@@ -81,7 +83,8 @@ rule variant_calling:
 		genome = join(GENOMES, '{ref}.fna'),
 		bam = join(ALIGNMENTS, '{ref}_{sample}.bam'),
 	output:
-		vcf = join(VCF, 'variants', '{ref}_{sample}.vcf.gz')
+		vcf = join(VCF, 'variants', '{ref}_{sample}.vcf.gz'),
+		versions = join(VCF, '{ref}_{sample}.vcf.versions.txt'),
 	log:
 		join(LOGS, 'variant_calling.{ref}.{sample}.log')
 	message:
@@ -96,6 +99,7 @@ rule variant_calling:
 			bcftools filter -sDepth -e 'FORMAT/DP<10' - | \
 			bcftools filter -sLowQual -g3 -G10 -e '%QUAL<30 || RPB<0.1' - | \
 			perl -p -e 's/^{params.ref}/Chromosome/' | bgzip > {output.vcf} && tabix -p vcf {output.vcf} ) 2> {log}
+		bcftools --version | grep "bcftools " &> {output.versions}
 		"""
 
 rule snp_annotation:
@@ -106,7 +110,8 @@ rule snp_annotation:
 	input:
 		join(VCF, 'variants', '{ref}_{sample}.vcf.gz'),
 	output:
-		join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
+		vcf = join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
+		versions = join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.versions.txt'),
 	log:
 		join(LOGS, 'snp_annotation.{ref}.{sample}.log')
 	message:
@@ -115,7 +120,8 @@ rule snp_annotation:
 		"../envs/alignment.yml"
 	shell:
 		"""
-        ( snpEff eff -no-downstream -no-upstream -no-utr -o vcf Mycobacterium_tuberculosis_h37rv {input} | bgzip > {output} && bcftools index {output} ) &> {log}
+        ( snpEff eff -no-downstream -no-upstream -no-utr -o vcf Mycobacterium_tuberculosis_h37rv {input} | bgzip > {output.vcf} && bcftools index {output.vcf} ) &> {log}
+		snpEff -version &> {output.versions} 
 		"""
 
 rule snp_report_all:
@@ -148,6 +154,7 @@ rule snp_report:
 		vcf = join(VCF, 'variants/annotated', '{ref}_{sample}.ann.vcf.gz'),
 	output:
 		tsv = join(VCF, 'variants/annotated', '{ref}_{sample}.tsv'),
+		versions = join(VCF, 'variants/annotated', '{ref}_{sample}.versions.txt'),
 	log:
 		join(LOGS, 'snp_report.{ref}.{sample}.log')
 	message:
@@ -160,6 +167,7 @@ rule snp_report:
 		bcftools filter -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} | \
 			bcftools query -f '[%SAMPLE]\t%POS\t[%GT]\t%REF\t%ALT{{0}}\t%TYPE\t%QUAL\t%FILTER\t%INFO/DP\t[%INFO/DP4]\t[%INFO/ANN]\n' -i 'GT="alt"' - | \
 			perl -p -e 's/\|/\t/g' > {output.tsv} ) &> {log}
+		bcftools --version | grep "bcftools " &> {output.versions}
 		"""
 #			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 
 
@@ -215,6 +223,7 @@ rule snp_annotation_filter:
 	output:
 		tmp = join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz'),
 		csi = join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi'),
+		versions = join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.versions.txt'),
 	log:
 		join(LOGS, 'snp_annotation_filter.{ref}.{sample}.log')
 	message:
@@ -227,6 +236,7 @@ rule snp_annotation_filter:
 		bcftools filter -Oz -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} > {output.tmp} 2>> {log};
 		bcftools index -f {output.tmp} 2>> {log};
 		echo "Finished snp_annotation_filter" >> {log}
+		bcftools --version | grep "bcftools " &> {output.versions}
 		"""
 
 rule snp_report_resistance:
@@ -242,6 +252,7 @@ rule snp_report_resistance:
 		csi = join(VCF, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.tmp.gz.csi'),
 	output:
 		tsv = join(VCF, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.tsv'),
+		versions = join(VCF, 'variants', 'annotated', 'resistance', '{ref}_{drug}_{sample}.versions.txt'),
 	log:
 		join(LOGS, 'snp_report_resistance.{ref}.{drug}.{sample}.log')
 	message:
@@ -254,6 +265,7 @@ rule snp_report_resistance:
 		bcftools query -R {params.bedfile}  -f '[%SAMPLE]\\t%POS\\t[%GT]\\t%REF\\t%ALT{{0}}\\t%TYPE\\t%QUAL\\t%FILTER\\t%INFO/DP\\t[%INFO/DP4]\\t[%INFO/ANN]\\n' -i 'GT="alt"' {input.tmp} | \
 			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 2>> {log};
 		echo "Finished snp_report_resistance" >> {log}
+		bcftools --version | grep "bcftools " &> {output.versions}
 		"""
 
 rule stats_coverage:
