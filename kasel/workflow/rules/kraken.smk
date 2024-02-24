@@ -12,6 +12,7 @@ rule run_kraken:
 	output:
 		report = join(KRAKEN, '{sample}.report.txt'),
 #		output = join(KRAKEN, '{sample}.output.txt')
+		versions = join(KRAKEN, '{sample}.versions.txt')
 	log:
 		join(LOGS, 'kraken.{sample}.log')
 	conda:
@@ -19,8 +20,9 @@ rule run_kraken:
 	shell:
 		"""
 		kraken2 --db {params.krakendb}  --paired --gzip-compressed --thread {threads} --use-names --report {output.report} --output - {input.r1} {input.r2} &> {log}
+		kraken2 --version > {output.versions}
+		echo "DB: " {params.krakendb} >> {output.versions}
 		"""
-#		kraken2 --db {params.krakendb}  --paired --gzip-compressed --thread {threads} --use-names --confidence 0.1 --report {output.report} --output {output.output} {input.r1} {input.r2} &> {log}
 
 
 rule run_kraken_extract:

@@ -4,7 +4,7 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - kraken2
-  - krakentools
+  - kraken2=2.1.3
+  - krakentools=1.2
 prefix: /homedirs8/awitney/miniconda3/envs/kraken2
 

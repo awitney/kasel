@@ -86,10 +86,18 @@ def fetch_caller_files(nocallers):
 		files.append(expand(join(CALLERS, 'mykrobe', '{sample}.results.csv'), sample=SAMPLES))
 	
 	return files
+	
+def fetch_fastlin_files(datadir):
+
+	files = []
+	
+	if datadir != False:
+		files.append(join(RESULTS, 'fastlin.txt'))
+	
+	return files
 
 rule all:
 	input:
-#		join(RESULTS, 'stats.coverage.' + REF + '.txt'),
 		join(RESULTS, 'stats.txt'),
 		#
 		expand(join(ALIGNMENTS, '{ref}_{sample}.bam'), ref=REF, sample=SAMPLES),
@@ -115,6 +123,10 @@ rule all:
 		#
 		fetch_legacy_files(config['nolegacy']),
 		#
+		# fastlin
+		#
+		fetch_fastlin_files(config['fastlin']),
+		#
 		# Drug specific SNPs
 		#
 		join(RESULTS, 'gene-snps-all.tsv'),
@@ -134,3 +146,4 @@ include: join('rules', "tb-profiler.smk")
 include: join('rules', "mtbseq.smk")
 include: join('rules', "mykrobe.smk")
 include: join('rules', "kraken.smk")
+include: join('rules', "fastlin.smk")

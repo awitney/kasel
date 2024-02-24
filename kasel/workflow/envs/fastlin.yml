@@ -1,0 +1,8 @@
+name: fastlin
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - fastlin=0.2.3
+

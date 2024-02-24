@@ -24,8 +24,12 @@ def run(parser, args):
 	verbose = args.verbose
 	list_params_changes = args.list_params_changes
 	summary = args.summary
+	fastlin = args.fastlin
 
 	logger.info("Pipeline started using: " + samples_file)
+
+	if fastlin == None:
+		fastlin = False
 	
 	# Define initial config parameters
 	params = {
@@ -34,7 +38,8 @@ def run(parser, args):
 		"output": 'pipeline',
 		"cluster": False,
 		"nolegacy": nolegacy,
-		"nocallers": nocallers
+		"nocallers": nocallers,
+		"fastlin": fastlin
 	}
 	
 	# Read config file
