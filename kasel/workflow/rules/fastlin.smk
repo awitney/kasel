@@ -8,7 +8,8 @@ rule run_fastin:
 		datadir = config['fastlin'],
 		barcodes = config['fastlin_barcodes']
 	output:
-		join(RESULTS, 'fastlin.txt'),
+		out = join(RESULTS, 'fastlin.txt'),
+		versions = join(RESULTS, 'fastlin.versions.txt')
 	log:
 		join(LOGS, 'fastlin.log')
 	message:
@@ -17,5 +18,6 @@ rule run_fastin:
 		"../envs/fastlin.yml"
 	shell:
 		"""
-		fastlin -d {params.datadir} -b {params.barcodes} -o {output} &> {log}
+		fastlin -d {params.datadir} -b {params.barcodes} -o {output.out} &> {log}
+		fastlin --version > {output.versions}
 		"""
