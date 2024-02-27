@@ -21,10 +21,10 @@ rule alignment_pe_legacy:
 		"../envs/alignment-legacy.yml"
 	shell:
 		"""
-		( bwa mem -t {threads} {input.genome} {input.r1} {input.r2} | samtools view -bS - | samtools sort -o - {params.tmp} - | samtools rmdup - - > {output.bam} ) 2> {log}
-		samtools index {output.bam}
 		( echo "bwa " $(( bwa 2>&1 ) | grep Version ) > {output.versions} ) || exit 0
 		( echo "samtools " $(( samtools 2>&1 ) | grep Version ) >> {output.versions} ) || exit 0
+		( bwa mem -t {threads} {input.genome} {input.r1} {input.r2} | samtools view -bS - | samtools sort -o - {params.tmp} - | samtools rmdup - - > {output.bam} ) 2> {log}
+		samtools index {output.bam}
 		"""
 
 rule site_calling_legacy:
@@ -46,8 +46,8 @@ rule site_calling_legacy:
 		"../envs/alignment-legacy.yml"
 	shell:
 		"""
-		( samtools mpileup -gf {input.genome} {input.bam} | bcftools view -cg - | bgzip > {output.vcf} && tabix -p vcf {output.vcf} ) &> {log}
 		( echo "samtools " $(( samtools 2>&1 ) | grep Version ) >> {output.versions} ) || exit 0
+		( samtools mpileup -gf {input.genome} {input.bam} | bcftools view -cg - | bgzip > {output.vcf} && tabix -p vcf {output.vcf} ) &> {log}
 		"""
 
 rule variant_calling_legacy:
@@ -72,9 +72,9 @@ rule variant_calling_legacy:
 		"../envs/alignment-legacy.yml"
 	shell:
 		"""
+		( echo "samtools " $(( samtools 2>&1 ) | grep Version ) >> {output.versions} ) || exit 0
 		( samtools mpileup -ugf {input.genome} {input.bam} | bcftools view -bvcg - > {params.bcf} && bcftools view {params.bcf} | vcfutils.pl varFilter -D 20000 | sed 's/NC_000962.3/Chromosome/g' | bgzip > {output.vcf} && tabix -p vcf {output.vcf} ) &> {log}
 		rm {params.bcf}
-		( echo "samtools " $(( samtools 2>&1 ) | grep Version ) >> {output.versions} ) || exit 0
 		"""
 
 rule snp_annotation_legacy:
@@ -95,8 +95,8 @@ rule snp_annotation_legacy:
 		"../envs/alignment-legacy.yml"
 	shell:
 		"""
-        ( snpEff eff -no-downstream -no-upstream -no-utr -o vcf Mycobacterium_tuberculosis_h37rv {input} | bgzip > {output.vcf} && bcftools index {output.vcf} ) &> {log}
 		snpEff -version &> {output.versions} 
+        ( snpEff eff -no-downstream -no-upstream -no-utr -o vcf Mycobacterium_tuberculosis_h37rv {input} | bgzip > {output.vcf} && bcftools index {output.vcf} ) &> {log}
 		"""
 
 rule snp_report_all_legacy:
@@ -138,11 +138,11 @@ rule snp_report_legacy:
 		"../envs/alignment.yml"
 	shell:
 		"""
+		bcftools --version | grep "bcftools " &> {output.versions}
 		( bcftools index -f {input.vcf}
 		bcftools filter -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} | \
 			bcftools query -f '[%SAMPLE]\\t%POS\\t[%GT]\\t%REF\\t%ALT{{0}}\\t%TYPE\\t%QUAL\\t%FILTER\\t%INFO/DP\\t[%INFO/DP4]\\t[%INFO/ANN]\\n' -i 'GT="alt"' - | \
 			perl -p -e 's/\|/\t/g' > {output.tsv} ) &> {log}
-		bcftools --version | grep "bcftools " &> {output.versions}
 		"""
 
 rule snp_report_resistance_all_legacy:
@@ -206,11 +206,11 @@ rule snp_annotation_filter_legacy:
 		"../envs/alignment.yml"
 	shell:
 		"""
+		bcftools --version | grep "bcftools " &> {output.versions}
 		echo "Starting snp_annotation_filter_legacy" > {log}
 		bcftools filter -Oz -sFAIL -g3 -G10 -e '%QUAL<30 || FORMAT/DP<4' {input.vcf} > {output.tmp} 2>> {log};
 		bcftools index -f {output.tmp} 2>> {log};
 		echo "Finished snp_annotation_filter_legacy" >> {log}
-		bcftools --version | grep "bcftools " &> {output.versions}
 		"""
 
 rule snp_report_resistance_legacy:
@@ -235,11 +235,11 @@ rule snp_report_resistance_legacy:
 		"../envs/alignment.yml"
 	shell:
 		"""
+		bcftools --version | grep "bcftools " &> {output.versions}
 		echo "Starting snp_report_resistance_legacy" > {log}
 		bcftools query -R {params.bedfile}  -f '[%SAMPLE]\t%POS\t[%GT]\t%REF\t%ALT{{0}}\t%TYPE\t%QUAL\t%FILTER\t%INFO/DP\t[%INFO/DP4]\t[%INFO/ANN]\n' -i 'GT="alt"' {input.tmp} | \
 			perl -p -e 's/\|/\t/g' | perl -p -e 's|{params.string}(.+).bam|$1|' > {output.tsv} 2>> {log}
 		echo "Finished snp_report_resistance_legacy" >> {log}
-		bcftools --version | grep "bcftools " &> {output.versions}
 		"""
 
 rule stats_coverage_legacy:
