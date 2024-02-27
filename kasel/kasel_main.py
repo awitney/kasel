@@ -87,6 +87,8 @@ def init_pipeline_parser():
 	parser_sample.add_argument(
 		'--list-params-changes', required=False, action="store_true", dest='list_params_changes', help='List params changes')
 	parser_sample.add_argument(
+		'--keep-incomplete', required=False, action="store_true", dest='keep_incomplete', help='Keep incomplete files')
+	parser_sample.add_argument(
 		'--fastlin', required=False, dest='fastlin', help='Data directory for fastlin tool')
 
 	parser_sample.set_defaults(func=run_subtool)

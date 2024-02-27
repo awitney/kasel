@@ -23,6 +23,7 @@ def run(parser, args):
 	nocallers = args.nocallers
 	verbose = args.verbose
 	list_params_changes = args.list_params_changes
+	keep_incomplete = args.keep_incomplete
 	summary = args.summary
 	fastlin = args.fastlin
 
@@ -76,7 +77,7 @@ def run(parser, args):
 		sys.exit(-1)
 
 	status = snakemake.snakemake(snakefile, printshellcmds=verbose, printreason=verbose, quiet=False, forceall=False, force_incomplete=True,
-									list_params_changes=list_params_changes, summary=summary, keepgoing=True, latency_wait=100,
+									list_params_changes=list_params_changes, keep_incomplete=keep_incomplete, summary=summary, keepgoing=True, latency_wait=100,
 									workdir=tempdir, config=params, cores=cores, nodes=cores, lock=False, dryrun=run, use_conda=True, 
 									cluster=params['cluster'], conda_frontend="conda", printdag=dag, until=until)
 	
