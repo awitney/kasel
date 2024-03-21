@@ -175,6 +175,7 @@ rule snp_report_resistance_all_summary_legacy:
 	input:
 		tsv1 = expand(join(RESULTS, LEGACY, 'variants/resistance', '{ref}_' + DATASET + '_BDQ.tsv'), ref=REF),
 		tsv2 = expand(join(RESULTS, LEGACY, 'variants/resistance', '{ref}_' + DATASET + '_PTM.tsv'), ref=REF),
+		tsv3 = expand(join(RESULTS, LEGACY, 'variants/resistance', '{ref}_' + DATASET + '_LZD.tsv'), ref=REF),
 	output:
 		out = join(RESULTS, LEGACY, 'variants/resistance', '{ref}_' + DATASET + '.tsv'),
 	message:
@@ -183,8 +184,9 @@ rule snp_report_resistance_all_summary_legacy:
 		"../envs/alignment.yml"
 	shell:
 		"""
-		wc -l  $(find {params.finddir} -name "*_BDQ*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ)_(.+).tsv:$3\t$2\t$1:' | sort -k2 > {output.out}
-		wc -l  $(find {params.finddir} -name "*_PTM*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ)_(.+).tsv:$3\t$2\t$1:' | sort -k2 >> {output.out}
+		wc -l  $(find {params.finddir} -name "*_BDQ*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ|LZD)_(.+).tsv:$3\t$2\t$1:' | sort -k2 > {output.out}
+		wc -l  $(find {params.finddir} -name "*_PTM*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ|LZD)_(.+).tsv:$3\t$2\t$1:' | sort -k2 >> {output.out}
+		wc -l  $(find {params.finddir} -name "*_LZD*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ|LZD)_(.+).tsv:$3\t$2\t$1:' | sort -k2 >> {output.out}
 		"""
 
 rule snp_annotation_filter_legacy:
@@ -403,6 +405,36 @@ rule check_snps_ptm_legacy:
 		join(LOGS, LEGACY, 'check_snps_ptm.log')
 	message:
 		"Running check_snps_ptm"
+	conda:
+		"../envs/alignment-legacy.yml"
+	shell:
+		"""
+		for i in {input}; \
+		do \
+			j=`echo $i | perl -p -e 's/{params.dir}\/NC_000962_(.+).ann.vcf.gz/$1/'`; \
+			echo "Sample: $j [File: $i]"; \
+			echo $'\n'; \
+			tabix -R {params.bedfile} $i; \
+			echo $'\n==============================\n'; \
+		done > {output} 2>> {log}
+		"""
+
+rule check_snps_lzd_legacy:
+	threads:
+		config['default']['threads']
+	resources:
+		memory = config['default']['memory']
+	params:
+		dir	= DATA + '\/' + LEGACY,
+		bedfile = join(config['kasel-data'], 'snps.Chromosome-LZD.bed'),
+	input:
+		expand(join(VCF, LEGACY, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
+	output:
+		join(RESULTS, LEGACY, 'gene-snps-LZD.txt'),
+	log:
+		join(LOGS, LEGACY, 'check_snps_lzd.log')
+	message:
+		"Running check_snps_lzd"
 	conda:
 		"../envs/alignment-legacy.yml"
 	shell:

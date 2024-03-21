@@ -38,11 +38,11 @@ rule alignment_pe:
 	shell:
 		"""
 		( bwa mem -t {threads} {input.genome} {input.r1} {input.r2} | samtools view -bS - | samtools sort -T {params.tmp} - | samtools rmdup - - > {output.bam} ) 2> {log}
+		samtools index {output.bam}
 		( echo "bwa " $(( bwa 2>&1 ) | grep Version ) > {output.versions} ) || exit 0
 		samtools --version | grep "samtools " &>> {output.versions}
 		"""
 
-#		samtools index {output.bam}
 #		bwa &> {output.versions}
 rule site_calling:
 	threads:
@@ -201,6 +201,7 @@ rule snp_report_resistance_all_summary:
 	input:
 		tsv1 = expand(join(RESULTS, 'variants/resistance', '{ref}_' + DATASET + '_BDQ.tsv'), ref=REF),
 		tsv2 = expand(join(RESULTS, 'variants/resistance', '{ref}_' + DATASET + '_PTM.tsv'), ref=REF),
+		tsv3 = expand(join(RESULTS, 'variants/resistance', '{ref}_' + DATASET + '_LZD.tsv'), ref=REF),
 	output:
 		out = join(RESULTS, 'variants/resistance', '{ref}_' + DATASET + '.tsv'),
 	message:
@@ -209,8 +210,9 @@ rule snp_report_resistance_all_summary:
 		"../envs/alignment.yml"
 	shell:
 		"""
-		wc -l  $(find {params.finddir} -name "*_BDQ*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ)_(.+).tsv:$3\t$2\t$1:' | sort -k2 > {output.out}
-		wc -l  $(find {params.finddir} -name "*_PTM*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ)_(.+).tsv:$3\t$2\t$1:' | sort -k2 >> {output.out}
+		wc -l  $(find {params.finddir} -name "*_BDQ*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ|LZD)_(.+).tsv:$3\t$2\t$1:' | sort -k2 > {output.out}
+		wc -l  $(find {params.finddir} -name "*_PTM*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ|LZD)_(.+).tsv:$3\t$2\t$1:' | sort -k2 >> {output.out}
+		wc -l  $(find {params.finddir} -name "*_LZD*.tsv") | perl -p -e 's:[ ]+(\d+)[ ]+{params.string}(PTM|BDQ|LZD)_(.+).tsv:$3\t$2\t$1:' | sort -k2 >> {output.out}
 		"""
 
 rule snp_annotation_filter:
@@ -441,6 +443,38 @@ rule check_snps_ptm:
 		join(LOGS, 'check_snps_ptm.log')
 	message:
 		"Running check_snps_ptm"
+	conda:
+		"../envs/alignment.yml"
+	shell:
+		"""
+		echo {params.bedfile} > {log};
+		less {params.bedfile} >> {log};
+		for i in {input}; \
+		do \
+			j=`echo $i | perl -p -e 's/{params.dir}\/NC_000962_(.+).ann.vcf.gz/$1/'`; \
+			echo "Sample: $j [File: $i]"; \
+			echo $'\n'; \
+			tabix -R {params.bedfile} $i; \
+			echo $'\n==============================\n'; \
+		done > {output}
+		"""
+
+rule check_snps_lzd:
+	threads:
+		config['default']['threads']
+	resources:
+		memory = config['default']['memory']
+	params:
+		dir	= DATA,
+		bedfile = join(config['kasel-data'], 'snps.Chromosome-LZD.bed'),
+	input:
+		expand(join(VCF, 'variants/annotated', REF + '_' + '{sample}.ann.vcf.gz'), sample=SAMPLES)
+	output:
+		join(RESULTS, 'gene-snps-LZD.txt'),
+	log:
+		join(LOGS, 'check_snps_lzd.log')
+	message:
+		"Running check_snps_lzd"
 	conda:
 		"../envs/alignment.yml"
 	shell:

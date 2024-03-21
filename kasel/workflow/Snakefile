@@ -39,7 +39,7 @@ pathlib.Path(TMP + '/' + LEGACY).mkdir(parents=True, exist_ok=True)
 
 REF = 'NC_000962'
 
-DRUGS = ['PTM', 'BDQ']
+DRUGS = ['PTM', 'BDQ', 'LZD']
 
 samples_file = config['samples_file']
 
@@ -132,6 +132,7 @@ rule all:
 		join(RESULTS, 'gene-snps-all.tsv'),
 		join(RESULTS, 'gene-snps-PTM.txt'),
 		join(RESULTS, 'gene-snps-BDQ.txt'),
+		join(RESULTS, 'gene-snps-LZD.txt'),
 		#
 		# Kraken
 		expand(join(KRAKEN, '{sample}.report.txt'), sample=SAMPLES),
