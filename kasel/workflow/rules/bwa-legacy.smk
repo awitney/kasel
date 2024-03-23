@@ -79,9 +79,9 @@ rule variant_calling_legacy:
 
 rule snp_annotation_legacy:
 	threads:
-		config['default']['threads']
+		config['snp_annotation_legacy']['threads']
 	resources:
-		memory = config['default']['memory']
+		memory = config['snp_annotation_legacy']['memory']
 	input:
 		join(VCF, LEGACY, 'variants', '{ref}_{sample}.vcf.gz'),
 	output:
@@ -120,9 +120,9 @@ rule snp_report_all_legacy:
 
 rule snp_report_legacy:
 	threads:
-		config['default']['threads']
+		config['snp_report_legacy']['threads']
 	resources:
-		memory = config['default']['memory']
+		memory = config['snp_report_legacy']['memory']
 	params:
 		string = join(ALIGNMENTS, LEGACY, '{ref}_')
 	input:
@@ -191,9 +191,9 @@ rule snp_report_resistance_all_summary_legacy:
 
 rule snp_annotation_filter_legacy:
 	threads:
-		config['default']['threads']
+		config['snp_annotation_filter_legacy']['threads']
 	resources:
-		memory = config['default']['memory']
+		memory = config['snp_annotation_filter_legacy']['memory']
 	input:
 		vcf = join(VCF, LEGACY, 'variants', 'annotated', '{ref}_{sample}.ann.vcf.gz'),
 	output:
