@@ -47,3 +47,7 @@ stats_coverage:
 run_kraken:
     threads: 20
     memory: "16G"
+
+snp_annotation_legacy:
+    threads: 1
+    memory: "4G"
