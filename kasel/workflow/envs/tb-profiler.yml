@@ -4,7 +4,6 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - tb-profiler=6.2.1
+  - tb-profiler=6.3.0
   - delly=1.2.6=hb7e2ac5_1
-prefix: /homedirs8/awitney/miniconda3/envs/TB-profiler
 
