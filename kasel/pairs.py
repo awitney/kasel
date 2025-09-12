@@ -62,7 +62,7 @@ def run(parser, args):
 	thisdir = os.path.abspath(os.path.dirname(__file__))
 	tempdir = ''
 
-	snakefile = os.path.join(thisdir, 'workflow.pairs','Snakefile')
+	snakefile = os.path.join(thisdir, 'workflow_pairs','Snakefile')
 	
 	if not os.path.exists(snakefile):
 		logger.error("Cannot find snakefile at {}\n".format(snakefile))
