@@ -1,0 +1,311 @@
+# Python dependecies pre-load
+import  os
+import  sys
+import  re
+import  pandas as pd
+from    os.path import join as join
+from    snakemake.utils import validate, min_version
+
+configfile: 'kasel-config.yml'
+
+#print("LOCAL CONFIG", config)
+
+dataset   = str(config['dataset'])
+pairsfile = str(config['pairs_file'])
+
+GENOMES    = 'genomes'
+
+OUTPUT     = config['output']
+DATASET    = config['dataset']
+
+RESULTS    = join(OUTPUT, DATASET, 'results')
+ALIGNMENTS = join(OUTPUT, DATASET, 'alignments')
+VCF        = join(OUTPUT, DATASET, 'vcf')
+PHYLOGENY  = join(RESULTS, dataset, 'phylogeny')
+LOGS       = join(RESULTS, dataset, 'logs')
+
+PAIRS        = join(OUTPUT, 'pairs')
+PAIRS_VCF    = join(OUTPUT, 'pairs', DATASET, 'vcf')
+PAIRS_PHYLO  = join(OUTPUT, 'pairs', DATASET, 'phylogeny')
+PAIRS_LOGS   = join(OUTPUT, 'pairs', DATASET, 'logs')
+
+
+PYJAR = '/homedirs8/bunit/NGS/Tools/pyjar/pyjar.py'
+REF = 'NC_000962'
+TREES=['all']
+
+# Load same names from meta data file
+pairsdata = pd.read_table(pairsfile).set_index("patient", drop=False)
+patients = pairsdata['patient'].tolist()
+
+before = pairsdata['before'].tolist()
+after  = pairsdata['after'].tolist()
+samples = before + after
+
+print("PATENTS", patients)
+
+def generate_vcfs(vcfann):
+
+	vcfs = []
+
+	for index, row in pairsdata.iterrows():
+
+#		print("Checking: ", row['patient'], "index", row['dataset'])
+		if vcfann == 'vcf':
+			vcf1 = join(PAIRS_VCF, str(row['dataset']), 'vcf', REF + '_' + str(row['before']) + '.vcf.gz')
+			vcf2 = join(PAIRS_VCF, str(row['dataset']), 'vcf', REF + '_' + str(row['after']) + '.vcf.gz')
+		elif vcfann == 'site_filter':
+			vcf1 = str(row['before']) + ',' + join(PAIRS_VCF, str(row['dataset']), 'vcf', REF + '_' + str(row['before']) + '.all.vcf.gz')
+			vcf2 = str(row['after']) + ',' + join(PAIRS_VCF, str(row['dataset']), 'vcf', REF + '_' + str(row['after']) + '.all.vcf.gz')
+		else:
+			vcf1 = join(PAIRS_VCF, str(row['dataset']), 'vcf', REF + '_' + str(row['before']) + '.' + vcfann + '.vcf.gz')
+			vcf2 = join(PAIRS_VCF, str(row['dataset']), 'vcf', REF + '_' + str(row['after']) + '.' + vcfann + '.vcf.gz')
+
+#		print("VCF:", vcf)
+		
+		vcfs.append(vcf1)
+		vcfs.append(vcf2)
+		vcfs = list(dict.fromkeys(vcfs))
+
+	vcfs = list(set(vcfs))
+
+#	print("VCFs: ", vcfs)
+	return vcfs
+
+# define format of ref
+wildcard_constraints:
+    ref="NC_\d+",
+
+rule all:
+	input:
+		generate_vcfs('vcf'),
+		generate_vcfs('all'),
+		generate_vcfs('ann'),
+		#
+		expand(join(PAIRS, DATASET, 'compared', '{patient}.tsv'), patient=patients),
+		#
+		expand(join(PAIRS_PHYLO, '{ref}.{name}.b1.infile'), ref=REF, name=TREES),
+		expand(join(PAIRS_PHYLO, 'RAxML_bestTree.{ref}.{name}.b1.pyjar.joint.tre'), ref=REF, name=TREES),
+		expand(join(PAIRS_PHYLO, 'RAxML_bestTree.{ref}.{name}.b1.pyjar.joint.tre.distances.tsv'), ref=REF, name=TREES),
+		expand(join(PAIRS_PHYLO, 'RAxML_bestTree.{ref}.{name}.b1.pyjar.joint.tre.distances-all.tsv'), ref=REF, name=TREES),
+
+rule site_calling:
+	threads:
+		4
+	input:
+		genome = join(GENOMES, '{ref}.fna'),
+		bam = join(OUTPUT, '{dataset}', 'alignments', '{ref}_{sample}.bam')
+	output:
+		vcf = join(PAIRS, DATASET, 'vcf', '{dataset}', 'vcf', '{ref}_{sample}.all.vcf.gz')
+	conda:
+		"envs/pairs.yml"
+	shell:
+		"bcftools mpileup -Ou -f {input.genome} \
+                {input.bam} \
+                --annotate 'FORMAT/DP,FORMAT/AD,FORMAT/ADF,FORMAT/ADR' | \
+                bcftools call --threads 1 -c | \
+				bcftools filter -sMixedA -e 'N_ALT==0 & ((DP4[0]+DP4[1])/sum(DP4)<0.75 | (DP4[2]+DP4[3])>10)' - | \
+				bcftools filter -sMixedR -e 'N_ALT>0  & ((DP4[2]+DP4[3])/sum(DP4)<0.75 | (DP4[0]+DP4[1])>10)' - | \
+                bcftools filter -sDepth -e 'FORMAT/DP<10' - | \
+                bcftools filter -sLowQual -e '%QUAL<30' - | \
+                bgzip > {output.vcf}"
+
+#                bcftools filter -sLowQual -g3 -G10 -e '%QUAL<30' - | \
+#                bcftools filter -sMixed -e '(DP4[2]+DP4[3])/sum(DP4)<0.75 | (DP4[0]+DP4[1])>10' - | \
+
+rule variant_calling:
+	threads:
+		4
+	input:
+		genome = join(GENOMES, 'NC_000962.fna'),
+		bam = join(OUTPUT, '{dataset}', 'alignments', '{ref}_{sample}.bam')
+	output:
+		vcf = join(PAIRS_VCF, '{dataset}', 'vcf', '{ref}_{sample}.vcf.gz')
+	conda:
+		"envs/pairs.yml"
+	shell:
+		"bcftools mpileup -Ou -f {input.genome} \
+                {input.bam} \
+                --annotate 'FORMAT/DP,FORMAT/AD,FORMAT/ADF,FORMAT/ADR' | \
+                bcftools call --threads 1 -cv | \
+				bcftools filter -sMixedA -e 'N_ALT==0 & ((DP4[0]+DP4[1])/sum(DP4)<0.75 | (DP4[2]+DP4[3])>10)' - | \
+				bcftools filter -sMixedR -e 'N_ALT>0  & ((DP4[2]+DP4[3])/sum(DP4)<0.75 | (DP4[0]+DP4[1])>10)' - | \
+                bcftools filter -sDepth -e 'FORMAT/DP<10' - | \
+                bcftools filter -sLowQual -e '%QUAL<30' - | \
+                bgzip > {output.vcf}"
+
+rule annotation:
+	threads:
+		4
+	params:
+		vcf = join(PAIRS_VCF, '{dataset}', 'vcf', '{ref}_{sample}.temp.vcf.gz')
+	input:
+		vcf = rules.site_calling.output.vcf
+	output:
+		ann = join(PAIRS_VCF, '{dataset}', 'vcf', '{ref}_{sample}.ann.vcf.gz')
+	conda:
+		"envs/pairs.yml"
+	shell:
+		"zcat {input.vcf} | perl -p -e 's/NC_000962.3/Chromosome/' | bgzip > {params.vcf}; \
+		snpEff eff -no-downstream -no-upstream -no-utr -o vcf Mycobacterium_tuberculosis_h37rv \
+			{params.vcf} | bgzip > {output.ann}; \
+		rm {params.vcf}"
+
+def get_pair(wildcards, when):
+
+	for index, row in pairsdata.iterrows():
+
+#		print("Checking: ", row['patient'], "index", row['dataset'])
+		if row['patient'] == wildcards.patient:
+			ann = join(PAIRS_VCF, str(row['dataset']), 'vcf', REF + '_' + str(row[when]) + '.ann.vcf.gz')
+
+	return ann
+
+rule compare:
+	threads:
+		4
+	input:
+		ann1 = lambda wildcards: get_pair(wildcards, 'before'),
+		ann2 = lambda wildcards: get_pair(wildcards, 'after'),
+	output:
+		tsv = join(PAIRS, '{dataset}', 'compared', '{patient}.tsv')
+	conda:
+		"envs/pairs.yml"
+	shell:
+		"python kasel/kasel/workflow_pairs/scripts/filter_vcf_pair.py \
+			--vcf1 {input.ann1} \
+			--vcf2 {input.ann2} \
+		> {output.tsv}"
+
+# fetches refv version number from ref name
+def site_filter_params(wildcards):
+	rparams = {
+		'ref':    wildcards.ref,
+		'refv':   refdata.loc[wildcards.ref,'refv'],
+		'outdir': PAIRS_PHYLO,
+		'name':   wildcards.name
+	}
+	
+	return rparams
+
+rule site_filter:
+	threads: 
+		workflow.cores
+	params: 
+##		p = site_filter_params
+		name = '{name}',
+		vcfs = ' --vcf '.join(generate_vcfs('site_filter'))
+	input:
+		generate_vcfs('all')
+	output:
+		infile = join(PAIRS_PHYLO, '{ref}.{name}.b1.infile')
+	log:
+		join(LOGS, 'site_filter.{ref}.{name}.log')
+	conda:
+		'envs/pairs.yml'
+	shell:
+		"""
+		perl kasel/kasel/workflow_pairs/scripts/snp_caller.pl --chrom NC_000962 --chromv 3 --qual 30 --dp 4 --dp4 75 --dpmax 5000 --af 0 --mq 30 --noindels --noheader \
+			--vcf {params.vcfs} \
+			--dir ./ --phylip {output.infile} --verbose 1 --refilter -b 1 --cpus {threads} &> {log}
+		"""
+#			--include config/trees.{params.name}.txt \
+
+rule phylogenetics:
+	threads: 
+		workflow.cores
+	params:
+#		p = site_filter_params
+		name = '{name}',
+		outdir = PAIRS_PHYLO
+	input:
+		infile = join(PAIRS_PHYLO, '{ref}.{name}.b1.infile')
+	output:
+		treefile = join(PAIRS_PHYLO, 'RAxML_bipartitions.{ref}.{name}.b1'),
+		info  = join(PAIRS_PHYLO, 'RAxML_info.{ref}.{name}.b1'),
+		tree  = join(PAIRS_PHYLO, 'RAxML_bestTree.{ref}.{name}.b1'),
+	log:
+		join(LOGS, 'phylogenetics.{ref}.{name}.log')
+	conda:
+		'envs/pairs.yml'
+	shell:
+		"""
+		raxmlHPC-PTHREADS-SSE3 -T {threads} -f a -s {input.infile} -x 12345 -p 1234 -# 1000 -m GTRGAMMA -w $PWD/{params.outdir} -n NC_000962.{params.name}.b1 -o NC_000962.3 &> {log}
+		"""
+
+rule convert_infile_fasta:
+		threads:
+			1
+		input:
+			infile = rules.site_filter.output.infile
+		output:
+			fasta = join(PAIRS_PHYLO, '{ref}.{name}.b1.fasta'),
+		shell:
+			"""
+			cat {input.infile} | tail -n +2 | perl -p -e 's/^(.+?)[ ]+/>$1\n/' > {output.fasta}
+			"""
+
+rule run_pyjar:
+		threads:
+			1
+		params:
+			pyjar = PYJAR,
+			prefix = join(PAIRS_PHYLO, 'RAxML_bestTree.{ref}.{name}.b1.pyjar'),
+		input:
+			fasta = rules.convert_infile_fasta.output.fasta,
+			info  = join(PAIRS_PHYLO, 'RAxML_info.{ref}.{name}.b1'),
+			tree  = join(PAIRS_PHYLO, 'RAxML_bestTree.{ref}.{name}.b1'),
+		output:
+			join(PAIRS_PHYLO, 'RAxML_bestTree.{ref}.{name}.b1.pyjar.joint.tre'),
+		conda:
+			'envs/pyjar.yml'
+		shell:
+			"""
+			{params.pyjar} -a {input.fasta} -i {input.info} -t {input.tree} -o {params.prefix} -v
+			"""
+
+rule run_pyjar_distance:
+		threads:
+			1
+		params:
+			dataset = dataset
+		input:
+			tree = join(PAIRS_PHYLO, 'RAxML_bestTree.{ref}.{name}.b1.pyjar.joint.tre'),
+		output:
+			join(PAIRS_PHYLO, 'RAxML_bestTree.{ref}.{name}.b1.pyjar.joint.tre.distances.tsv'),
+		log:
+			join(LOGS, 'pyjar_distance.{ref}.{name}.log')
+		conda:
+			'envs/pyjar.yml'
+		shell:
+			"""
+			(
+			read
+			while IFS= read -r line;
+				do
+					j=`echo $line | perl -p -e 's/.+[ \t]+.+[ \t]+(.+)[ \t]+.+/$1/'`;
+					k=`echo $line | perl -p -e 's/.+[ \t]+.+[ \t]+.+[ \t]+(.+)/$1/'`;
+					echo "-----------------------------------------------------------------------------------------"
+					echo $j $k;
+					python kasel/kasel/workflow_pairs/scripts/snp_distances.py -t {input.tree} -s1 $j -s2 $k
+			done
+			) < meta/{params.dataset}-pairs.tsv > {output} 2> {log}
+			"""
+
+rule run_pyjar_distance_all:
+		threads:
+			1
+		params:
+			dataset = dataset
+		input:
+			tree = join(PAIRS_PHYLO, 'RAxML_bestTree.{ref}.{name}.b1.pyjar.joint.tre'),
+		output:
+			join(PAIRS_PHYLO, 'RAxML_bestTree.{ref}.{name}.b1.pyjar.joint.tre.distances-all.tsv'),
+		log:
+			join(LOGS, 'pyjar_distance_all.{ref}.{name}.log')
+		conda:
+			'envs/pyjar.yml'
+		shell:
+			"""
+			python kasel/kasel/workflow_pairs/scripts/snp_distances.py -t {input.tree} > {output} 2> {log}
+			"""

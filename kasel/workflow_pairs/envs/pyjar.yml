@@ -1,0 +1,14 @@
+name: pyjar
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - biopython=1.76=py38h516909a_0
+  - dendropy=4.4.0=py_1
+  - numpy=1.17.3=py38h95a1406_0
+  - python=3.8.1=h357f687_1
+  - scipy=1.4.1=py38h921218d_0
+  - ete3
+prefix: /homedirs8/awitney/miniconda3/envs/pyjar
+

@@ -1,0 +1,14 @@
+name: bwa
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bcftools=1.14
+  - bzip2
+  - samtools
+  - snpeff
+  - pyvcf
+  - raxml
+prefix: /homedirs8/awitney/miniconda3/envs/bwa
+
