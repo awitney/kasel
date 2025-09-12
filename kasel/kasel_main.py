@@ -15,7 +15,8 @@ def run_subtool(parser, args):
 		from . import meta as submodule
 	elif args.command == 'sample':
 		from . import sample as submodule
-
+	elif args.command == 'pairs':
+		from . import pairs as submodule
 	# run the chosen submodule.
 	submodule.run(parser, args)
 
@@ -41,11 +42,9 @@ def init_pipeline_parser():
 
 	parser = argparse.ArgumentParser(
 	prog='kasel', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-	parser.add_argument("-v", "--version", help="Installed Artic version",
-		action="version",
-		version="%(prog)s " + str(version.__version__))
 	subparsers = parser.add_subparsers(
 		title='[sub-commands]', dest='command', parser_class=ArgumentParserWithDefaults)
+	parser.add_argument("--version", help="Installed Artic version", action="version", version="%(prog)s " + str(version.__version__))
 
 	# meta
 	parser_meta = subparsers.add_parser('meta', help='Meta data file')
@@ -66,6 +65,7 @@ def init_pipeline_parser():
 
 	# sample
 	parser_sample = subparsers.add_parser('sample', help='Sample subparser')
+	parser_sample.add_argument("--version", help="Installed Artic version", action="version", version="%(prog)s " + str(version.__version__))
 
 	parser_sample.add_argument(
 		'-s', '--samples', required=True, dest='samples_file', help='Sample list file')
@@ -92,6 +92,30 @@ def init_pipeline_parser():
 		'--fastlin', required=False, dest='fastlin', help='Data directory for fastlin tool')
 
 	parser_sample.set_defaults(func=run_subtool)
+
+	# pairs
+	parser_pairs = subparsers.add_parser('pairs', help='Sample subparser')
+	parser_pairs.add_argument("--version", help="Installed Artic version", action="version", version="%(prog)s " + str(version.__version_pairs__))
+
+	parser_pairs.add_argument(
+		'-s', '--samples', required=True, dest='samples_file', help='Sample list file')
+	parser_pairs.add_argument(
+		'-p', '--pairs', required=True, dest='pairs_file', help='Sample list file')
+	parser_pairs.add_argument(
+		'-d', '--dataset', required=True, dest='dataset', help='dataset')
+	parser_pairs.set_defaults(func=run_subtool)
+	parser_pairs.add_argument(
+		'--dag', action="store_true", required=False, dest='dag', help='Generate DAG diagram')
+	parser_pairs.add_argument(
+		'-cl', '--cluster', action="store_true", required=False, dest='cluster', help='Run on cluster with qsub')
+	parser_pairs.add_argument(
+		'-c', '--cores', required=False, type=int, dest='cores', default=1, help='Number of cores')
+	parser_pairs.add_argument(
+		'-u', '--until', required=False, dest='until', help='define specific rules to run')
+	parser_pairs.add_argument(
+		'--list-params-changes', required=False, action="store_true", dest='list_params_changes', help='List params changes')
+	parser_pairs.add_argument(
+		'--keep-incomplete', required=False, action="store_true", dest='keep_incomplete', help='Keep incomplete files')
 
 	# return the parser
 	return parser
