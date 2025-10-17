@@ -30,7 +30,7 @@ PAIRS_PHYLO  = join(OUTPUT, 'pairs', DATASET, 'phylogeny')
 PAIRS_LOGS   = join(OUTPUT, 'pairs', DATASET, 'logs')
 
 
-PYJAR = '/homedirs8/bunit/NGS/Tools/pyjar/pyjar.py'
+PYJAR = config['pyjar.py']
 REF = 'NC_000962'
 TREES=['all']
 
