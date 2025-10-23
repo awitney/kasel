@@ -90,6 +90,8 @@ def init_pipeline_parser():
 		'--keep-incomplete', required=False, action="store_true", dest='keep_incomplete', help='Keep incomplete files')
 	parser_sample.add_argument(
 		'--fastlin', required=False, dest='fastlin', help='Data directory for fastlin tool')
+	parser_sample.add_argument(
+		'--conda_frontend', required=False, type=str, dest='conda_frontend', default="conda", help='Specify if using conda or mamba')
 
 	parser_sample.set_defaults(func=run_subtool)
 

@@ -26,11 +26,17 @@ def run(parser, args):
 	keep_incomplete = args.keep_incomplete
 	summary = args.summary
 	fastlin = args.fastlin
+	conda_frontend = args.conda_frontend
 
 	logger.info("Pipeline started using: " + samples_file)
 
 	if fastlin == None:
 		fastlin = False
+    
+	if conda_frontend == "mamba":
+		conda_frontend =  "mamba"
+	else:
+		conda_frontend = "conda"
 	
 	# Define initial config parameters
 	params = {
@@ -79,7 +85,7 @@ def run(parser, args):
 	status = snakemake.snakemake(snakefile, printshellcmds=verbose, printreason=verbose, quiet=False, forceall=False, force_incomplete=True,
 									list_params_changes=list_params_changes, keep_incomplete=keep_incomplete, summary=summary, keepgoing=True, latency_wait=100,
 									workdir=tempdir, config=params, cores=cores, nodes=cores, lock=False, dryrun=run, use_conda=True, 
-									cluster=params['cluster'], conda_frontend="mamba", printdag=dag, until=until)
+									cluster=params['cluster'], conda_frontend=conda_frontend, printdag=dag, until=until)
 	
 	if status == True:
 		logger.info("Pipeline finished")
