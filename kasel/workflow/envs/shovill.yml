@@ -1,0 +1,10 @@
+name: shovill
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - shovill=1.0.9
+  - mlst
+prefix: /homedirs8/awitney/miniconda3/envs/shovill
+

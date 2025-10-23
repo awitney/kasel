@@ -27,6 +27,7 @@ def run(parser, args):
 	summary = args.summary
 	fastlin = args.fastlin
 	conda_frontend = args.conda_frontend
+	do_assembly = args.do_assembly
 
 	logger.info("Pipeline started using: " + samples_file)
 
@@ -46,7 +47,8 @@ def run(parser, args):
 		"cluster": False,
 		"nolegacy": nolegacy,
 		"nocallers": nocallers,
-		"fastlin": fastlin
+		"fastlin": fastlin,
+		"do_assembly": do_assembly
 	}
 	
 	# Read config file

@@ -91,6 +91,8 @@ def init_pipeline_parser():
 	parser_sample.add_argument(
 		'--fastlin', required=False, dest='fastlin', help='Data directory for fastlin tool')
 	parser_sample.add_argument(
+		'--do_assembly', required=False, action="store_true", dest='do_assembly', help='Perform Shovill assembly and Bakta annotation')
+	parser_sample.add_argument(
 		'--conda_frontend', required=False, type=str, dest='conda_frontend', default="conda", help='Specify if using conda or mamba')
 
 	parser_sample.set_defaults(func=run_subtool)

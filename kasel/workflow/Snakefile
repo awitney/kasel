@@ -23,11 +23,14 @@ VCF        = join(OUTPUT, DATASET, 'vcf')
 RESULTS    = join(OUTPUT, DATASET, 'results')
 CALLERS    = join(OUTPUT, DATASET, 'callers')
 KRAKEN     = join(OUTPUT, DATASET, 'kraken')
+SHOVILL    = join(OUTPUT, DATASET, 'shovill')
+BAKTA      = join(OUTPUT, DATASET, 'bakta')
 LOGS       = join(OUTPUT, DATASET, 'logs')
 VERSIONS   = join(OUTPUT, DATASET, 'versions')
 TMP        = join(OUTPUT, DATASET, 'tmp')
 
 KRAKENDB = config['krakendb']
+BAKTADB  = config['baktadb']
 
 # set a directory prefix for legacy version samtools
 #DATASET_LEGACY = DATASET + '-' + LEGACY
@@ -96,6 +99,16 @@ def fetch_fastlin_files(datadir):
 	
 	return files
 
+def fetch_assembly_files(do_assembly):
+
+	files = []
+	
+	if do_assembly == True:
+		files.append(expand(join(SHOVILL, '{sample}', 'contigs.fa'), sample=SAMPLES))
+		files.append(expand(join(BAKTA, '{sample}','{sample}.gff3'), sample=SAMPLES))
+
+	return files
+
 rule all:
 	input:
 		join(RESULTS, 'stats.txt'),
@@ -127,6 +140,10 @@ rule all:
 		#
 		fetch_fastlin_files(config['fastlin']),
 		#
+		# Assembly
+		#
+		fetch_assembly_files(config['do_assembly']),
+		#
 		# Drug specific SNPs
 		#
 		join(RESULTS, 'gene-snps-all.tsv'),
@@ -148,3 +165,5 @@ include: join('rules', "mtbseq.smk")
 include: join('rules', "mykrobe.smk")
 include: join('rules', "kraken.smk")
 include: join('rules', "fastlin.smk")
+include: join('rules', "shovill.smk")
+include: join('rules', "bakta.smk")
