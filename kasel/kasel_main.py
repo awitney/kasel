@@ -65,7 +65,7 @@ def init_pipeline_parser():
 
 	# sample
 	parser_sample = subparsers.add_parser('sample', help='Sample subparser')
-	parser_sample.add_argument("--version", help="Installed Artic version", action="version", version="%(prog)s " + str(version.__version__))
+	parser_sample.add_argument("--version", help="Installed Artic version", action="version", version="%(prog)s " + str(version.__version_sample__))
 
 	parser_sample.add_argument(
 		'-s', '--samples', required=True, dest='samples_file', help='Sample list file')
