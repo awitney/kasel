@@ -120,6 +120,8 @@ def init_pipeline_parser():
 		'--list-params-changes', required=False, action="store_true", dest='list_params_changes', help='List params changes')
 	parser_pairs.add_argument(
 		'--keep-incomplete', required=False, action="store_true", dest='keep_incomplete', help='Keep incomplete files')
+	parser_pairs.add_argument(
+		'--conda_frontend', required=False, type=str, dest='conda_frontend', default="conda", help='Specify if using conda or mamba')
 
 	# return the parser
 	return parser
