@@ -51,3 +51,27 @@ run_kraken:
 snp_annotation_legacy:
     threads: 1
     memory: "4G"
+
+annotation:
+    threads: 2
+    memory: "4G"
+
+compare:
+    threads: 1
+    memory: "4G"
+
+site_filter:
+    threads: 10
+    memory: "16G"
+
+phylogenetics:
+    threads: 10
+    memory: "16G"
+
+convert_infile_fasta:
+    threads: 1
+    memory: "4G"
+
+run_pyjar:
+    threads: 1
+    memory: "4G"
