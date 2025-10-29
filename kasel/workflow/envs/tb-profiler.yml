@@ -6,4 +6,4 @@ channels:
 dependencies:
   - tb-profiler=6.3.0
   - delly=1.2.6=hb7e2ac5_1
-
+  - snpeff=5.2=hdfd78af_1
